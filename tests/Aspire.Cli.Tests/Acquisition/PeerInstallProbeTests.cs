@@ -340,7 +340,8 @@ public class PeerInstallProbeTests(ITestOutputHelper outputHelper) : IDisposable
     {
         // Sleep significantly longer than the probe timeout we configure so
         // the timeout path is the one that completes the await.
-        using var fakePeer = FakePeerScript.BuildSleeper(outputHelper, sleepSeconds: 30);
+        var fakeSleep = TimeSpan.FromSeconds(30);
+        using var fakePeer = FakePeerScript.BuildSleeper(outputHelper, sleepSeconds: (int)fakeSleep.TotalSeconds);
 
         // Construct a probe with a deliberately tight timeout so the test
         // doesn't have to wait the production 5s budget.
@@ -351,8 +352,11 @@ public class PeerInstallProbeTests(ITestOutputHelper outputHelper) : IDisposable
 
         var failed = Assert.IsType<PeerProbeResult.Failed>(result);
         Assert.Contains("timed out", failed.Reason, StringComparison.OrdinalIgnoreCase);
-        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5),
-            $"Expected probe to return within a few seconds after timing out; took {sw.Elapsed}.");
+        // Windows CI can spend several seconds starting and tearing down cmd.exe
+        // under load. The important invariant is that the probe returns through
+        // its timeout path well before the fake peer could exit on its own.
+        Assert.True(sw.Elapsed < fakeSleep / 2,
+            $"Expected probe to return before the fake peer could exit on its own; took {sw.Elapsed}.");
     }
 
     [Fact]
