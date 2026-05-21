@@ -126,7 +126,7 @@ internal sealed class AgentInitCommand : BaseCommand, IPackageMetaPrefetchingCom
 
         if (runAgentInit)
         {
-            return await ExecuteAgentInitAsync(workspaceRoot, parseResult: null, cancellationToken);
+            return await ExecuteAgentInitAsync(workspaceRoot, parseResult: null, AgentInitErrorMode.BestEffort, cancellationToken);
         }
 
         return new(CliExitCodes.Success, [], []);
@@ -135,7 +135,7 @@ internal sealed class AgentInitCommand : BaseCommand, IPackageMetaPrefetchingCom
     protected override async Task<CommandResult> ExecuteAsync(ParseResult parseResult, CancellationToken cancellationToken)
     {
         var workspaceRoot = await PromptForWorkspaceRootAsync(parseResult, cancellationToken);
-        var result = await ExecuteAgentInitAsync(workspaceRoot, parseResult, cancellationToken);
+        var result = await ExecuteAgentInitAsync(workspaceRoot, parseResult, AgentInitErrorMode.Strict, cancellationToken);
         return CommandResult.FromExitCode(result.ExitCode);
     }
 
@@ -169,7 +169,7 @@ internal sealed class AgentInitCommand : BaseCommand, IPackageMetaPrefetchingCom
         return new DirectoryInfo(workspaceRootPath);
     }
 
-    private async Task<AgentInitExecutionResult> ExecuteAgentInitAsync(DirectoryInfo workspaceRoot, ParseResult? parseResult, CancellationToken cancellationToken)
+    private async Task<AgentInitExecutionResult> ExecuteAgentInitAsync(DirectoryInfo workspaceRoot, ParseResult? parseResult, AgentInitErrorMode errorMode, CancellationToken cancellationToken)
     {
         var context = new AgentEnvironmentScanContext
         {
@@ -298,8 +298,18 @@ internal sealed class AgentInitCommand : BaseCommand, IPackageMetaPrefetchingCom
             }
             else
             {
-                _interactionService.DisplayError(result.Message!);
-                hasErrors = true;
+                if (errorMode is AgentInitErrorMode.Strict)
+                {
+                    _interactionService.DisplayError(result.Message!);
+                    hasErrors = true;
+                }
+                else
+                {
+                    _interactionService.DisplayMessage(KnownEmojis.Warning, result.Message!);
+                    selectedSkills = selectedSkills
+                        .Where(static skill => skill.SourceKind is not SkillSourceKind.AspireSkillsBundle)
+                        .ToList();
+                }
             }
         }
 
@@ -494,6 +504,12 @@ internal sealed class AgentInitCommand : BaseCommand, IPackageMetaPrefetchingCom
         }
 
         throw new InvalidOperationException($"Skill '{skill.Name}' does not define installable files.");
+    }
+
+    private enum AgentInitErrorMode
+    {
+        Strict,
+        BestEffort
     }
 }
 
