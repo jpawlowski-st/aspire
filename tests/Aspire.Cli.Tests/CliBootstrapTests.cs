@@ -18,6 +18,7 @@ namespace Aspire.Cli.Tests;
 /// <see cref="IIdentityChannelReader"/>, registered in DI by
 /// <see cref="Aspire.Cli.Program.BuildApplicationAsync"/>.
 /// </summary>
+[Collection(CliHostTestCollection.Name)]
 public class CliBootstrapTests(ITestOutputHelper outputHelper)
 {
     private static readonly string[] s_fixedChannels = ["stable", "staging", "daily", "local"];
