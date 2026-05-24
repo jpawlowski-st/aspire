@@ -14,7 +14,7 @@ Aspire.Hosting.JavaScript/addNodeApp(name: string, appDirectory: string, scriptP
 Aspire.Hosting.JavaScript/addViteApp(name: string, appDirectory: string, runScriptName?: string) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.ViteAppResource
 Aspire.Hosting.JavaScript/disableBuildValidation() -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.NextJsAppResource
 Aspire.Hosting.JavaScript/publishAsNodeServer(entryPoint: string, outputPath?: string) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.JavaScriptAppResource
-Aspire.Hosting.JavaScript/publishAsNpmScript(startScriptName?: string, runScriptArguments?: string) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.JavaScriptAppResource
+Aspire.Hosting.JavaScript/publishAsPackageScript(scriptName?: string, runScriptArguments?: string) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.JavaScriptAppResource
 Aspire.Hosting.JavaScript/publishAsStaticWebsite(apiPath?: string, apiTarget?: Aspire.Hosting/Aspire.Hosting.IResourceWithServiceDiscovery, outputPath?: string, stripPrefix?: boolean, targetEndpointName?: string) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.JavaScriptAppResource
 Aspire.Hosting.JavaScript/withBrowserDebugger(browser?: string) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.JavaScriptAppResource
 Aspire.Hosting.JavaScript/withBuildScript(scriptName: string, args?: string[]) -> Aspire.Hosting.JavaScript/Aspire.Hosting.JavaScript.JavaScriptAppResource
