@@ -214,6 +214,15 @@ namespace Aspire.Dashboard.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to No trace.
+        /// </summary>
+        public static string StructuredLogsNoTrace {
+            get {
+                return ResourceManager.GetString("StructuredLogsNoTrace", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Showing &lt;strong&gt;{0} structured logs&lt;/strong&gt;.
         /// </summary>
         public static string TotalItemsFooterPluralText {

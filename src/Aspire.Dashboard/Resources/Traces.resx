@@ -178,4 +178,16 @@
   <data name="SpanTypeSelectSpanType" xml:space="preserve">
     <value>Select span type</value>
   </data>
+  <data name="SpanStatusLabel" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="SpanStatusSelectStatus" xml:space="preserve">
+    <value>Select span status</value>
+  </data>
+  <data name="SpanKindLabel" xml:space="preserve">
+    <value>Kind</value>
+  </data>
+  <data name="SpanKindSelectKind" xml:space="preserve">
+    <value>Select span kind</value>
+  </data>
 </root>

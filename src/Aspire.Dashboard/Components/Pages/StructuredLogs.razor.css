@@ -39,3 +39,11 @@
     text-wrap: wrap;
     white-space: pre-line;
 }
+
+::deep .no-trace-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--neutral-foreground-hint);
+    font-style: italic;
+}

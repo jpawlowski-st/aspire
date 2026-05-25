@@ -1,0 +1,38 @@
+@using Aspire.Dashboard.Otlp.Model
+@{
+    var spanStatusSelectId = $"span-status-select-{Guid.NewGuid():N}";
+}
+
+@if (ViewportInformation.IsDesktop)
+{
+    <label for="@spanStatusSelectId">@Loc[nameof(Dashboard.Resources.Traces.SpanStatusLabel)]</label>
+
+    <DesktopToolbarDivider />
+
+    <FluentSelect TOption="SelectViewModel<OtlpSpanStatusCode?>" TValue="SelectViewModel<OtlpSpanStatusCode?>"
+                  Class="toolbar-select"
+                  Id="@spanStatusSelectId"
+                  Items="@SpanStatuses"
+                  Position="SelectPosition.Below"
+                  OptionText="@(c => c?.Name)"
+                  @bind-Value="@SpanStatus"
+                  @bind-Value:after="@HandleSelectedSpanStatusChangedInternalAsync"
+                  AriaLabel="@Loc[nameof(Dashboard.Resources.Traces.SpanStatusSelectStatus)]"
+                  @attributes="@AdditionalAttributes" />
+}
+else
+{
+    <div>
+        <FluentSelect TOption="SelectViewModel<OtlpSpanStatusCode?>" TValue="SelectViewModel<OtlpSpanStatusCode?>"
+                      Class="toolbar-select"
+                      Id="@spanStatusSelectId"
+                      Items="@SpanStatuses"
+                      Position="SelectPosition.Below"
+                      OptionText="@(c => c?.Name)"
+                      Label="@Loc[nameof(Dashboard.Resources.Traces.SpanStatusLabel)]"
+                      @bind-Value="@SpanStatus"
+                      @bind-Value:after="@HandleSelectedSpanStatusChangedInternalAsync"
+                      AriaLabel="@Loc[nameof(Dashboard.Resources.Traces.SpanStatusSelectStatus)]"
+                      @attributes="@AdditionalAttributes" />
+    </div>
+}

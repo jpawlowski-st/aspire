@@ -18,6 +18,8 @@ public class TracesViewModel
     private int _startIndex;
     private int _count;
     private SpanType? _spanType;
+    private OtlpSpanStatusCode? _spanStatus;
+    private OtlpSpanKind? _spanKind;
 
     public TracesViewModel(DashboardDataSource dataSource)
     {
@@ -26,6 +28,8 @@ public class TracesViewModel
 
     public ResourceKey? ResourceKey { get => _resourceKey; set => SetValue(ref _resourceKey, value); }
     public SpanType? SpanType { get => _spanType; set => SetValue(ref _spanType, value); }
+    public OtlpSpanStatusCode? SpanStatus { get => _spanStatus; set => SetValue(ref _spanStatus, value); }
+    public OtlpSpanKind? SpanKind { get => _spanKind; set => SetValue(ref _spanKind, value); }
     public string FilterText { get => _filterText; set => SetValue(ref _filterText, value); }
     public int StartIndex { get => _startIndex; set => SetValue(ref _startIndex, value); }
     public int Count { get => _count; set => SetValue(ref _count, value); }
@@ -104,6 +108,14 @@ public class TracesViewModel
         if (SpanType?.Filter is { } typeFilter)
         {
             filters.Add(typeFilter);
+        }
+        if (SpanStatus is { } status)
+        {
+            filters.Add(new FieldTelemetryFilter { Field = KnownTraceFields.StatusField, Condition = FilterCondition.Equals, Value = status.ToString() });
+        }
+        if (SpanKind is { } kind)
+        {
+            filters.Add(new FieldTelemetryFilter { Field = KnownTraceFields.KindField, Condition = FilterCondition.Equals, Value = kind.ToString() });
         }
 
         return filters;

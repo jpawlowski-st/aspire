@@ -214,6 +214,42 @@ namespace Aspire.Dashboard.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Status.
+        /// </summary>
+        public static string SpanStatusLabel {
+            get {
+                return ResourceManager.GetString("SpanStatusLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select span status.
+        /// </summary>
+        public static string SpanStatusSelectStatus {
+            get {
+                return ResourceManager.GetString("SpanStatusSelectStatus", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Kind.
+        /// </summary>
+        public static string SpanKindLabel {
+            get {
+                return ResourceManager.GetString("SpanKindLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Select span kind.
+        /// </summary>
+        public static string SpanKindSelectKind {
+            get {
+                return ResourceManager.GetString("SpanKindSelectKind", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Showing &lt;strong&gt;{0} of {1} traces&lt;/strong&gt;. Use filters to narrow the results.
         /// </summary>
         public static string VirtualizedLimitText {

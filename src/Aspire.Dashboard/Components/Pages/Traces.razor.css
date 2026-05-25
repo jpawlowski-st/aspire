@@ -62,3 +62,17 @@
 ::deep .trace-duration {
     padding-left: 10px;
 }
+
+::deep .trace-kind {
+    color: var(--neutral-foreground-rest);
+}
+
+::deep .trace-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+::deep .trace-status-unset {
+    color: var(--neutral-foreground-hint);
+}

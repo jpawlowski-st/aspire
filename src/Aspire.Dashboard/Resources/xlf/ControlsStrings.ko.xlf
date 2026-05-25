@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2-transitional.xsd">
   <file datatype="xml" source-language="en" target-language="ko" original="../ControlsStrings.resx">
     <body>
@@ -585,6 +585,45 @@
       <trans-unit id="SpanDetailsStartTimeLabel">
         <source>Start time</source>
         <target state="new">Start time</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanKindClient">
+        <source>Client</source>
+        <target state="new">Client</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanKindConsumer">
+        <source>Consumer</source>
+        <target state="new">Consumer</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanKindInternal">
+        <source>Internal</source>
+        <target state="new">Internal</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanKindProducer">
+        <source>Producer</source>
+        <target state="new">Producer</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanKindServer">
+        <source>Server</source>
+        <target state="new">Server</target>
+        <note />
+      </trans-unit>      <trans-unit id="SpanStatusError">
+        <source>Error</source>
+        <target state="new">Error</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanStatusOk">
+        <source>OK</source>
+        <target state="new">OK</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SpanStatusUnset">
+        <source>Unset</source>
+        <target state="new">Unset</target>
         <note />
       </trans-unit>
       <trans-unit id="SpanTypeCloud">

@@ -1,0 +1,38 @@
+@using Aspire.Dashboard.Otlp.Model
+@{
+    var spanKindSelectId = $"span-kind-select-{Guid.NewGuid():N}";
+}
+
+@if (ViewportInformation.IsDesktop)
+{
+    <label for="@spanKindSelectId">@Loc[nameof(Dashboard.Resources.Traces.SpanKindLabel)]</label>
+
+    <DesktopToolbarDivider />
+
+    <FluentSelect TOption="SelectViewModel<OtlpSpanKind?>" TValue="SelectViewModel<OtlpSpanKind?>"
+                  Class="toolbar-select"
+                  Id="@spanKindSelectId"
+                  Items="@SpanKinds"
+                  Position="SelectPosition.Below"
+                  OptionText="@(c => c?.Name)"
+                  @bind-Value="@SpanKind"
+                  @bind-Value:after="@HandleSelectedSpanKindChangedInternalAsync"
+                  AriaLabel="@Loc[nameof(Dashboard.Resources.Traces.SpanKindSelectKind)]"
+                  @attributes="@AdditionalAttributes" />
+}
+else
+{
+    <div>
+        <FluentSelect TOption="SelectViewModel<OtlpSpanKind?>" TValue="SelectViewModel<OtlpSpanKind?>"
+                      Class="toolbar-select"
+                      Id="@spanKindSelectId"
+                      Items="@SpanKinds"
+                      Position="SelectPosition.Below"
+                      OptionText="@(c => c?.Name)"
+                      Label="@Loc[nameof(Dashboard.Resources.Traces.SpanKindLabel)]"
+                      @bind-Value="@SpanKind"
+                      @bind-Value:after="@HandleSelectedSpanKindChangedInternalAsync"
+                      AriaLabel="@Loc[nameof(Dashboard.Resources.Traces.SpanKindSelectKind)]"
+                      @attributes="@AdditionalAttributes" />
+    </div>
+}

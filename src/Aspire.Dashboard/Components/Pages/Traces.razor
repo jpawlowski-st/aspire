@@ -59,6 +59,16 @@
                                 SpanTypes="@_spanTypes"
                                 HandleSelectedSpanTypeChangedAsync="@HandleSelectedSpanTypeChangedAsync" />
 
+                <SpanStatusSelect
+                                @bind-SpanStatus="@PageViewModel.SelectedSpanStatus"
+                                SpanStatuses="@_spanStatuses"
+                                HandleSelectedSpanStatusChangedAsync="@HandleSelectedSpanStatusChangedAsync" />
+
+                <SpanKindSelect
+                                @bind-SpanKind="@PageViewModel.SelectedSpanKind"
+                                SpanKinds="@_spanKinds"
+                                HandleSelectedSpanKindChangedAsync="@HandleSelectedSpanKindChangedAsync" />
+
                 <DesktopToolbarDivider />
 
                 @if (TracesViewModel.Filters.Count == 0)
@@ -142,6 +152,25 @@
                                         }
                                     </span>
                                 </div>
+                            </AspireTemplateColumn>
+                            <AspireTemplateColumn ColumnId="@KindColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.SpanKindLabel)]" Tooltip="true" TooltipText="@(context => GetSpanKindLabel(context.RootOrFirstSpan.Kind))">
+                                <span class="trace-kind">@GetSpanKindLabel(context.RootOrFirstSpan.Kind)</span>
+                            </AspireTemplateColumn>
+                            <AspireTemplateColumn ColumnId="@StatusColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.SpanStatusLabel)]" Tooltip="true" TooltipText="@(context => GetSpanStatusLabel(context.RootOrFirstSpan.Status))">
+                                @{
+                                    var status = context.RootOrFirstSpan.Status;
+                                }
+                                <span class="trace-status trace-status-@(status.ToString().ToLowerInvariant())">
+                                    @if (status == OtlpSpanStatusCode.Error)
+                                    {
+                                        <FluentIcon Icon="Icons.Filled.Size12.ErrorCircle" Color="Color.Error" Class="trace-status-icon" />
+                                    }
+                                    else if (status == OtlpSpanStatusCode.Ok)
+                                    {
+                                        <FluentIcon Icon="Icons.Filled.Size12.CheckmarkCircle" Color="Color.Success" Class="trace-status-icon" />
+                                    }
+                                    @GetSpanStatusLabel(status)
+                                </span>
                             </AspireTemplateColumn>
                             <AspireTemplateColumn ColumnId="@SpansColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.TracesSpansColumnHeader)]">
                                 <FluentOverflow TItem="object">

@@ -82,6 +82,11 @@
         <target state="translated">Carimbo de data/hora</target>
         <note />
       </trans-unit>
+      <trans-unit id="StructuredLogsNoTrace">
+        <source>No trace</source>
+        <target state="new">No trace</target>
+        <note />
+      </trans-unit>
       <trans-unit id="StructuredLogsTraceColumnHeader">
         <source>Trace</source>
         <target state="translated">Rastreamento</target>

@@ -127,21 +127,12 @@
     <value>Graph</value>
   </data>
   <data name="ChartContainerTableTab" xml:space="preserve">
-    <value>Table</value>
-  </data>
-  <data name="ResourcesContainerTableTab" xml:space="preserve">
     <value>Resources</value>
   </data>
-  <data name="ResourcesContainerParametersTab" xml:space="preserve">
+  <data name="ChartContainerParametersTab" xml:space="preserve">
     <value>Parameters</value>
   </data>
-  <data name="ResourcesContainerGraphTab" xml:space="preserve">
-    <value>Graph</value>
-  </data>
   <data name="ChartContainerGraphAccessibleLabel" xml:space="preserve">
-    <value>Graph. For an accessible view please navigate to the Table tab</value>
-  </data>
-  <data name="ResourcesContainerGraphAccessibleLabel" xml:space="preserve">
     <value>Graph. For an accessible view please navigate to the Resources tab</value>
   </data>
   <data name="EnvironmentVariablesFilterToggleShowSpecOnly" xml:space="preserve">
@@ -540,8 +531,32 @@
   <data name="SpanTypeCloud" xml:space="preserve">
     <value>Cloud</value>
   </data>
-  <data name="ViewJson" xml:space="preserve">
-    <value>View JSON</value>
+  <data name="SpanStatusOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="SpanStatusError" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="SpanStatusUnset" xml:space="preserve">
+    <value>Unset</value>
+  </data>
+  <data name="SpanKindInternal" xml:space="preserve">
+    <value>Internal</value>
+  </data>
+  <data name="SpanKindServer" xml:space="preserve">
+    <value>Server</value>
+  </data>
+  <data name="SpanKindClient" xml:space="preserve">
+    <value>Client</value>
+  </data>
+  <data name="SpanKindProducer" xml:space="preserve">
+    <value>Producer</value>
+  </data>
+  <data name="SpanKindConsumer" xml:space="preserve">
+    <value>Consumer</value>
+  </data>
+  <data name="ExportJson" xml:space="preserve">
+    <value>Export JSON</value>
   </data>
   <data name="ExportEnv" xml:space="preserve">
     <value>Export .env</value>

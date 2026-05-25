@@ -206,7 +206,7 @@ internal static class DashboardUrls
         return url;
     }
 
-    public static string TracesUrl(string? resource = null, string? type = null, string? filters = null)
+    public static string TracesUrl(string? resource = null, string? type = null, string? status = null, string? kind = null, string? filters = null)
     {
         var url = $"/{TracesBasePath}";
         if (resource != null)
@@ -216,6 +216,14 @@ internal static class DashboardUrls
         if (type != null)
         {
             url = AddQueryString(url, "type", type);
+        }
+        if (status != null)
+        {
+            url = AddQueryString(url, "status", status);
+        }
+        if (kind != null)
+        {
+            url = AddQueryString(url, "kind", kind);
         }
         if (filters != null)
         {

@@ -32,6 +32,8 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     private const string ScrollContainerId = "tracesScrollContainer";
     private const string TimestampColumn = nameof(TimestampColumn);
     private const string NameColumn = nameof(NameColumn);
+    private const string KindColumn = nameof(KindColumn);
+    private const string StatusColumn = nameof(StatusColumn);
     private const string SpansColumn = nameof(SpansColumn);
     private const string DurationColumn = nameof(DurationColumn);
     private const string ActionsColumn = nameof(ActionsColumn);
@@ -44,6 +46,10 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     private int _totalItemsCount;
     private int? _displayedItemCount;
     private List<SelectViewModel<SpanType>> _spanTypes = default!;
+    private List<SelectViewModel<OtlpSpanStatusCode?>> _spanStatuses = default!;
+    private SelectViewModel<OtlpSpanStatusCode?> _allSpanStatus = null!;
+    private List<SelectViewModel<OtlpSpanKind?>> _spanKinds = default!;
+    private SelectViewModel<OtlpSpanKind?> _allSpanKind = null!;
     private List<OtlpResource> _resources = default!;
     private List<SelectViewModel<ResourceTypeDetails>> _resourceViewModels = default!;
     private Subscription? _resourcesSubscription;
@@ -107,6 +113,14 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     [Parameter]
     [SupplyParameterFromQuery(Name = "type")]
     public string? SpanTypeText { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "status")]
+    public string? SpanStatusText { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "kind")]
+    public string? SpanKindText { get; set; }
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "filters")]
@@ -183,6 +197,8 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         _gridColumns = [
             new GridColumn(Name: TimestampColumn, DesktopWidth: "0.8fr", MobileWidth: "0.8fr"),
             new GridColumn(Name: NameColumn, DesktopWidth: "2fr", MobileWidth: "2fr"),
+            new GridColumn(Name: KindColumn, DesktopWidth: "0.6fr"),
+            new GridColumn(Name: StatusColumn, DesktopWidth: "0.6fr"),
             new GridColumn(Name: SpansColumn, DesktopWidth: "3fr"),
             new GridColumn(Name: DurationColumn, DesktopWidth: "0.8fr"),
             new GridColumn(Name: ActionsColumn, DesktopWidth: "0.5fr", MobileWidth: "1fr")
@@ -190,7 +206,25 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
 
         _allResource = new SelectViewModel<ResourceTypeDetails> { Id = null, Name = ControlsStringsLoc[name: nameof(ControlsStrings.LabelAll)] };
         _spanTypes = SpanType.CreateKnownSpanTypes(ControlsStringsLoc);
-        PageViewModel = new TracesPageViewModel { SelectedResource = _allResource, SelectedSpanType = _spanTypes[0] };
+        _allSpanStatus = new SelectViewModel<OtlpSpanStatusCode?> { Id = null, Name = ControlsStringsLoc[nameof(ControlsStrings.LabelAll)] };
+        _spanStatuses = new List<SelectViewModel<OtlpSpanStatusCode?>>
+        {
+            _allSpanStatus,
+            new() { Id = OtlpSpanStatusCode.Ok, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanStatusOk)] },
+            new() { Id = OtlpSpanStatusCode.Error, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanStatusError)] },
+            new() { Id = OtlpSpanStatusCode.Unset, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanStatusUnset)] },
+        };
+        _allSpanKind = new SelectViewModel<OtlpSpanKind?> { Id = null, Name = ControlsStringsLoc[nameof(ControlsStrings.LabelAll)] };
+        _spanKinds = new List<SelectViewModel<OtlpSpanKind?>>
+        {
+            _allSpanKind,
+            new() { Id = OtlpSpanKind.Internal, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanKindInternal)] },
+            new() { Id = OtlpSpanKind.Server, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanKindServer)] },
+            new() { Id = OtlpSpanKind.Client, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanKindClient)] },
+            new() { Id = OtlpSpanKind.Producer, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanKindProducer)] },
+            new() { Id = OtlpSpanKind.Consumer, Name = ControlsStringsLoc[nameof(ControlsStrings.SpanKindConsumer)] },
+        };
+        PageViewModel = new TracesPageViewModel { SelectedResource = _allResource, SelectedSpanType = _spanTypes[0], SelectedSpanStatus = _allSpanStatus, SelectedSpanKind = _allSpanKind };
 
         UpdateResources();
         _resourcesSubscription = TelemetryRepository.OnNewResources(callback: () => InvokeAsync(workItem: () =>
@@ -231,6 +265,16 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         await this.AfterViewModelChangedAsync(_contentLayout, waitToApplyMobileChange: true);
     }
 
+    private async Task HandleSelectedSpanStatusChangedAsync()
+    {
+        await this.AfterViewModelChangedAsync(_contentLayout, waitToApplyMobileChange: true);
+    }
+
+    private async Task HandleSelectedSpanKindChangedAsync()
+    {
+        await this.AfterViewModelChangedAsync(_contentLayout, waitToApplyMobileChange: true);
+    }
+
     private void UpdateSubscription()
     {
         var selectedResourceKey = PageViewModel.SelectedResource.Id?.GetResourceKey();
@@ -252,6 +296,24 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         TracesViewModel.FilterText = _filter;
         await InvokeAsync(_dataGrid.SafeRefreshDataAsync);
     }
+
+    private string GetSpanKindLabel(OtlpSpanKind kind) => kind switch
+    {
+        OtlpSpanKind.Internal => ControlsStringsLoc[nameof(ControlsStrings.SpanKindInternal)],
+        OtlpSpanKind.Server => ControlsStringsLoc[nameof(ControlsStrings.SpanKindServer)],
+        OtlpSpanKind.Client => ControlsStringsLoc[nameof(ControlsStrings.SpanKindClient)],
+        OtlpSpanKind.Producer => ControlsStringsLoc[nameof(ControlsStrings.SpanKindProducer)],
+        OtlpSpanKind.Consumer => ControlsStringsLoc[nameof(ControlsStrings.SpanKindConsumer)],
+        _ => kind.ToString()
+    };
+
+    private string GetSpanStatusLabel(OtlpSpanStatusCode status) => status switch
+    {
+        OtlpSpanStatusCode.Ok => ControlsStringsLoc[nameof(ControlsStrings.SpanStatusOk)],
+        OtlpSpanStatusCode.Error => ControlsStringsLoc[nameof(ControlsStrings.SpanStatusError)],
+        OtlpSpanStatusCode.Unset => ControlsStringsLoc[nameof(ControlsStrings.SpanStatusUnset)],
+        _ => status.ToString()
+    };
 
     private string GetResourceName(OtlpResource app) => OtlpHelpers.GetResourceName(app, _resources);
 
@@ -303,6 +365,16 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         viewModel.SelectedSpanType = _spanTypes.SingleOrDefault(t => t.Id?.Name == SpanTypeText) ?? _spanTypes[0];
         TracesViewModel.SpanType = viewModel.SelectedSpanType.Id;
 
+        viewModel.SelectedSpanStatus = (SpanStatusText != null && Enum.TryParse<OtlpSpanStatusCode>(SpanStatusText, ignoreCase: true, out var parsedStatus)
+            ? _spanStatuses.SingleOrDefault(s => s.Id == parsedStatus)
+            : null) ?? _allSpanStatus;
+        TracesViewModel.SpanStatus = viewModel.SelectedSpanStatus.Id;
+
+        viewModel.SelectedSpanKind = (SpanKindText != null && Enum.TryParse<OtlpSpanKind>(SpanKindText, ignoreCase: true, out var parsedKind)
+            ? _spanKinds.SingleOrDefault(k => k.Id == parsedKind)
+            : null) ?? _allSpanKind;
+        TracesViewModel.SpanKind = viewModel.SelectedSpanKind.Id;
+
         if (SerializedFilters is not null)
         {
             var filters = TelemetryFilterFormatter.DeserializeFiltersFromString(SerializedFilters);
@@ -327,6 +399,8 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         return DashboardUrls.TracesUrl(
             resource: serializable.SelectedResource,
             type: serializable.SelectedSpanType,
+            status: serializable.SelectedSpanStatus,
+            kind: serializable.SelectedSpanKind,
             filters: filters);
     }
 
@@ -336,6 +410,8 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         {
             SelectedResource = PageViewModel.SelectedResource.Id is not null ? PageViewModel.SelectedResource.Name : null,
             SelectedSpanType = PageViewModel.SelectedSpanType.Id?.Name,
+            SelectedSpanStatus = PageViewModel.SelectedSpanStatus.Id?.ToString(),
+            SelectedSpanKind = PageViewModel.SelectedSpanKind.Id?.ToString(),
             Filters = TracesViewModel.Filters
         };
     }
@@ -437,12 +513,16 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     {
         public required SelectViewModel<ResourceTypeDetails> SelectedResource { get; set; }
         public required SelectViewModel<SpanType> SelectedSpanType { get; set; }
+        public required SelectViewModel<OtlpSpanStatusCode?> SelectedSpanStatus { get; set; }
+        public required SelectViewModel<OtlpSpanKind?> SelectedSpanKind { get; set; }
     }
 
     public class TracesPageState
     {
         public string? SelectedResource { get; set; }
         public string? SelectedSpanType { get; set; }
+        public string? SelectedSpanStatus { get; set; }
+        public string? SelectedSpanKind { get; set; }
         public required IReadOnlyCollection<FieldTelemetryFilter> Filters { get; set; }
     }
 

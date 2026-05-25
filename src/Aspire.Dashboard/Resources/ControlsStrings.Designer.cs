@@ -1105,6 +1105,78 @@ namespace Aspire.Dashboard.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to OK.
+        /// </summary>
+        public static string SpanStatusOk {
+            get {
+                return ResourceManager.GetString("SpanStatusOk", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        public static string SpanStatusError {
+            get {
+                return ResourceManager.GetString("SpanStatusError", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unset.
+        /// </summary>
+        public static string SpanStatusUnset {
+            get {
+                return ResourceManager.GetString("SpanStatusUnset", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Internal.
+        /// </summary>
+        public static string SpanKindInternal {
+            get {
+                return ResourceManager.GetString("SpanKindInternal", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Server.
+        /// </summary>
+        public static string SpanKindServer {
+            get {
+                return ResourceManager.GetString("SpanKindServer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Client.
+        /// </summary>
+        public static string SpanKindClient {
+            get {
+                return ResourceManager.GetString("SpanKindClient", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Producer.
+        /// </summary>
+        public static string SpanKindProducer {
+            get {
+                return ResourceManager.GetString("SpanKindProducer", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Consumer.
+        /// </summary>
+        public static string SpanKindConsumer {
+            get {
+                return ResourceManager.GetString("SpanKindConsumer", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Database.
         /// </summary>
         public static string SpanTypeDatabase {

@@ -105,7 +105,10 @@
                                             }
                                             else
                                             {
-                                                <span class="empty-data"></span>
+                                                <span class="no-trace-indicator" title="@Loc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsNoTrace)]">
+                                                    <FluentIcon Value="@(new Icons.Regular.Size16.LinkDismiss())" Color="Color.Disabled" />
+                                                    <span>@Loc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsNoTrace)]</span>
+                                                </span>
                                             }
                                         </AspireTemplateColumn>
                                         <AspireTemplateColumn ColumnId="@ActionsColumn" ColumnManager="@_manager" Title="@ControlsStringsLoc[nameof(ControlsStrings.ActionsColumnHeader)]" Class="no-ellipsis">
