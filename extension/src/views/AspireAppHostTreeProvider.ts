@@ -18,6 +18,7 @@ import {
     tooltipEndpoints,
     appHostSourceNotFound,
     appHostSourceOpenFailed,
+    logFileOpenFailed,
     healthChecksLabel,
     healthCheckDescription,
     resourceDescriptionHealth,
@@ -761,7 +762,7 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
             const document = await vscode.workspace.openTextDocument(uri);
             await vscode.window.showTextDocument(document, { preview: false });
         } catch {
-            vscode.window.showWarningMessage(appHostSourceOpenFailed(filePath));
+            vscode.window.showWarningMessage(logFileOpenFailed(filePath));
         }
     }
 
