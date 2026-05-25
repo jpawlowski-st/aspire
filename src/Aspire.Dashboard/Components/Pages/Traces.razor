@@ -26,6 +26,7 @@
             <div class="page-header-with-favourites">
                 <h1 class="page-header">@Loc[nameof(Dashboard.Resources.Traces.TracesHeader)]</h1>
                 <FavouritesMenu Favourites="@_favourites"
+                                SelectedFavourite="@_selectedFavourite"
                                 OnSaveCurrent="@SaveCurrentAsFavouriteAsync"
                                 OnApply="@ApplyFavouriteAsync"
                                 OnDelete="@DeleteFavouriteAsync" />
@@ -45,6 +46,17 @@
                                   SelectedResource="@PageViewModel.SelectedResource" />
 
             <div class="toolbar-end">
+                @if (HasAnyFilter())
+                {
+                    <FluentButton Appearance="ButtonAppearance.Default"
+                                  Class="toolbar-button"
+                                  Title="@ControlsStringsLoc[nameof(ControlsStrings.ClearAllFiltersButtonTitle)]"
+                                  aria-label="@ControlsStringsLoc[nameof(ControlsStrings.ClearAllFiltersButtonTitle)]"
+                                  OnClick="ClearAllFiltersAsync">
+                        <FluentIcon Value="@(new Icons.Regular.Size20.FilterDismiss())" Color="Color.Primary" />
+                    </FluentButton>
+                }
+
                 <FluentTextInput TextInputType="TextInputType.Search" @bind-Value="_filter"
                               Class="toolbar-search"
                               @bind-Value:after="HandleAfterFilterBindAsync"

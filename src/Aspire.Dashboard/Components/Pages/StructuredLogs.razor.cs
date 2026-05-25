@@ -57,6 +57,7 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
     private GridColumnManager _manager = null!;
     private IList<GridColumn> _gridColumns = null!;
     private List<SavedFavourite> _favourites = new();
+    private SavedFavourite? _selectedFavourite;
     private const string FavouritesPageKey = "StructuredLogs";
 
     public string BasePath => DashboardUrls.StructuredLogsBasePath;
@@ -244,6 +245,7 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
         }
 
         UpdateSubscription();
+        UpdateSelectedFavourite();
         UpdateTelemetryProperties();
 
         if (LogEntryId is not null)
@@ -381,6 +383,7 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
     private async Task HandleAfterFilterBindAsync()
     {
         ViewModel.FilterText = _filter;
+        UpdateSelectedFavourite();
         await InvokeAsync(_dataGrid.SafeRefreshDataAsync);
 
         await ClearSelectedLogEntryIfExcludedAsync(_filter, ViewModel.Filters);
@@ -441,6 +444,19 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
             await JS.InvokeVoidAsync("focusElement", ScrollContainerId, true);
 
             _favourites = await FavouritesStore.GetAsync(FavouritesPageKey);
+            UpdateSelectedFavourite();
+
+            if (_selectedFavourite is null && IsDefaultPageState())
+            {
+                var lastId = await FavouritesStore.GetLastAppliedIdAsync(FavouritesPageKey);
+                var lastFavourite = lastId is not null ? _favourites.FirstOrDefault(f => f.Id == lastId) : null;
+                if (lastFavourite is not null)
+                {
+                    await ApplyFavouriteAsync(lastFavourite);
+                    return;
+                }
+            }
+
             StateHasChanged();
         }
 
@@ -454,6 +470,32 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
         {
             await _dataGrid!.RefreshDataAndRenderAsync();
         }
+    }
+
+    private bool IsDefaultPageState()
+    {
+        return string.IsNullOrEmpty(ResourceName)
+            && string.IsNullOrEmpty(LogLevelText)
+            && string.IsNullOrEmpty(SerializedFilters)
+            && string.IsNullOrEmpty(TraceId)
+            && string.IsNullOrEmpty(SpanId)
+            && string.IsNullOrEmpty(_filter);
+    }
+
+    private void UpdateSelectedFavourite()
+    {
+        if (_favourites.Count == 0)
+        {
+            _selectedFavourite = null;
+            return;
+        }
+
+        var currentUrl = GetUrlFromSerializableViewModel(ConvertViewModelToSerializable());
+        var currentFilter = _filter ?? string.Empty;
+
+        _selectedFavourite = _favourites.FirstOrDefault(f =>
+            string.Equals(f.Url, currentUrl, StringComparison.Ordinal) &&
+            string.Equals(f.FilterText ?? string.Empty, currentFilter, StringComparison.Ordinal));
     }
 
     private string? PauseText => PauseManager.AreStructuredLogsPaused(out var startTime)
@@ -500,19 +542,44 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
         StateHasChanged();
     }
 
-    private Task ApplyFavouriteAsync(SavedFavourite favourite)
+    private async Task ApplyFavouriteAsync(SavedFavourite favourite)
     {
         _filter = favourite.FilterText ?? string.Empty;
         ViewModel.FilterText = _filter;
+        _selectedFavourite = favourite;
+        await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, favourite.Id);
         NavigationManager.NavigateTo(favourite.Url);
-        return Task.CompletedTask;
     }
 
     private async Task DeleteFavouriteAsync(SavedFavourite favourite)
     {
         await FavouritesStore.RemoveAsync(FavouritesPageKey, favourite.Id);
         _favourites.RemoveAll(f => f.Id == favourite.Id);
+        if (_selectedFavourite is not null && _selectedFavourite.Id == favourite.Id)
+        {
+            _selectedFavourite = null;
+            await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, null);
+        }
         StateHasChanged();
+    }
+
+    private bool HasAnyFilter()
+    {
+        return !string.IsNullOrEmpty(_filter)
+            || ViewModel.Filters.Count > 0
+            || PageViewModel.SelectedLogLevel.Id is not null;
+    }
+
+    private async Task ClearAllFiltersAsync()
+    {
+        _filter = string.Empty;
+        ViewModel.FilterText = string.Empty;
+        ViewModel.ClearFilters();
+        PageViewModel.SelectedLogLevel = _logLevels[0];
+        _selectedFavourite = null;
+        await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, null);
+        await ClearSelectedLogEntryAsync();
+        await this.AfterViewModelChangedAsync(_contentLayout, waitToApplyMobileChange: false);
     }
 
     public string GetUrlFromSerializableViewModel(StructuredLogsPageState serializable)

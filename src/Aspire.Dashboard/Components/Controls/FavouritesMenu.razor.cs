@@ -22,6 +22,9 @@ public partial class FavouritesMenu : ComponentBase
     public IReadOnlyList<SavedFavourite>? Favourites { get; set; }
 
     [Parameter]
+    public SavedFavourite? SelectedFavourite { get; set; }
+
+    [Parameter]
     public EventCallback OnSaveCurrent { get; set; }
 
     [Parameter]

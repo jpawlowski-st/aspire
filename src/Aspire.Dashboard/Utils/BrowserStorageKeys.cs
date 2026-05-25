@@ -32,8 +32,11 @@ internal static class BrowserStorageKeys
     public const string SplitterOrientationKeyPrefix = "Aspire_SplitterOrientation_";
     public const string SplitterSizeKeyPrefix = "Aspire_SplitterSize_";
     public const string FavouritesKeyPrefix = "Aspire_Favourites_";
+    public const string FavouritesLastAppliedKeyPrefix = "Aspire_Favourites_LastApplied_";
 
     public static string FavouritesKey(string pageKey) => $"{FavouritesKeyPrefix}{pageKey}";
+
+    public static string FavouritesLastAppliedKey(string pageKey) => $"{FavouritesLastAppliedKeyPrefix}{pageKey}";
 
     public static string CollapsedResourceNamesKey(string applicationName)
     {

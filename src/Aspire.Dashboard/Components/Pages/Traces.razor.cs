@@ -61,6 +61,7 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     private GridColumnManager _manager = null!;
 
     private List<SavedFavourite> _favourites = new();
+    private SavedFavourite? _selectedFavourite;
     private const string FavouritesPageKey = "Traces";
 
     public string SessionStorageKey => BrowserStorageKeys.TracesPageState;
@@ -250,6 +251,23 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
 
         TracesViewModel.ResourceKey = PageViewModel.SelectedResource.Id?.GetResourceKey();
         UpdateSubscription();
+        UpdateSelectedFavourite();
+    }
+
+    private void UpdateSelectedFavourite()
+    {
+        if (_favourites.Count == 0)
+        {
+            _selectedFavourite = null;
+            return;
+        }
+
+        var currentUrl = GetUrlFromSerializableViewModel(ConvertViewModelToSerializable());
+        var currentFilter = _filter ?? string.Empty;
+
+        _selectedFavourite = _favourites.FirstOrDefault(f =>
+            string.Equals(f.Url, currentUrl, StringComparison.Ordinal) &&
+            string.Equals(f.FilterText ?? string.Empty, currentFilter, StringComparison.Ordinal));
     }
 
     private void UpdateResources()
@@ -301,6 +319,7 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     private async Task HandleAfterFilterBindAsync()
     {
         TracesViewModel.FilterText = _filter;
+        UpdateSelectedFavourite();
         await InvokeAsync(_dataGrid.SafeRefreshDataAsync);
     }
 
@@ -364,6 +383,19 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
             await JS.InvokeVoidAsync("focusElement", ScrollContainerId, true);
 
             _favourites = await FavouritesStore.GetAsync(FavouritesPageKey);
+            UpdateSelectedFavourite();
+
+            if (_selectedFavourite is null && IsDefaultPageState())
+            {
+                var lastId = await FavouritesStore.GetLastAppliedIdAsync(FavouritesPageKey);
+                var lastFavourite = lastId is not null ? _favourites.FirstOrDefault(f => f.Id == lastId) : null;
+                if (lastFavourite is not null)
+                {
+                    await ApplyFavouriteAsync(lastFavourite);
+                    return;
+                }
+            }
+
             StateHasChanged();
         }
 
@@ -371,6 +403,16 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         {
             await _dataGrid.RefreshDataAndRenderAsync();
         }
+    }
+
+    private bool IsDefaultPageState()
+    {
+        return string.IsNullOrEmpty(ResourceName)
+            && string.IsNullOrEmpty(SpanTypeText)
+            && string.IsNullOrEmpty(SpanStatusText)
+            && string.IsNullOrEmpty(SpanKindText)
+            && string.IsNullOrEmpty(SerializedFilters)
+            && string.IsNullOrEmpty(_filter);
     }
 
     private string? PauseText => PauseManager.AreTracesPaused(out var startTime)
@@ -417,19 +459,47 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         StateHasChanged();
     }
 
-    private Task ApplyFavouriteAsync(SavedFavourite favourite)
+    private async Task ApplyFavouriteAsync(SavedFavourite favourite)
     {
         _filter = favourite.FilterText ?? string.Empty;
         TracesViewModel.FilterText = _filter;
+        _selectedFavourite = favourite;
+        await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, favourite.Id);
         NavigationManager.NavigateTo(favourite.Url);
-        return Task.CompletedTask;
     }
 
     private async Task DeleteFavouriteAsync(SavedFavourite favourite)
     {
         await FavouritesStore.RemoveAsync(FavouritesPageKey, favourite.Id);
         _favourites.RemoveAll(f => f.Id == favourite.Id);
+        if (_selectedFavourite is not null && _selectedFavourite.Id == favourite.Id)
+        {
+            _selectedFavourite = null;
+            await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, null);
+        }
         StateHasChanged();
+    }
+
+    private bool HasAnyFilter()
+    {
+        return !string.IsNullOrEmpty(_filter)
+            || TracesViewModel.Filters.Count > 0
+            || PageViewModel.SelectedSpanType.Id is not null
+            || PageViewModel.SelectedSpanStatus.Id is not null
+            || PageViewModel.SelectedSpanKind.Id is not null;
+    }
+
+    private async Task ClearAllFiltersAsync()
+    {
+        _filter = string.Empty;
+        TracesViewModel.FilterText = string.Empty;
+        TracesViewModel.ClearFilters();
+        PageViewModel.SelectedSpanType = _spanTypes[0];
+        PageViewModel.SelectedSpanStatus = _allSpanStatus;
+        PageViewModel.SelectedSpanKind = _allSpanKind;
+        _selectedFavourite = null;
+        await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, null);
+        await this.AfterViewModelChangedAsync(_contentLayout, waitToApplyMobileChange: false);
     }
 
     public async Task UpdateViewModelFromQueryAsync(TracesPageViewModel viewModel)

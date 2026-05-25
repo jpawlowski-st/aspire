@@ -44,4 +44,20 @@ public sealed class FavouritesStore
             await _localStorage.SetUnprotectedAsync(BrowserStorageKeys.FavouritesKey(pageKey), favourites).ConfigureAwait(false);
         }
     }
+
+    public async Task<string?> GetLastAppliedIdAsync(string pageKey)
+    {
+        var result = await _localStorage.GetUnprotectedAsync<string>(BrowserStorageKeys.FavouritesLastAppliedKey(pageKey)).ConfigureAwait(false);
+        return result.Success ? result.Value : null;
+    }
+
+    public Task SetLastAppliedIdAsync(string pageKey, string? id)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            return _localStorage.SetUnprotectedAsync<string?>(BrowserStorageKeys.FavouritesLastAppliedKey(pageKey), null);
+        }
+
+        return _localStorage.SetUnprotectedAsync(BrowserStorageKeys.FavouritesLastAppliedKey(pageKey), id);
+    }
 }

@@ -13,6 +13,15 @@
     <FluentIcon Value="@_starIcon" />
 </FluentButton>
 
+@if (SelectedFavourite is not null)
+{
+    <span class="favourite-active-tag"
+          title="@string.Format(Loc[nameof(ControlsStrings.FavouritesActiveTagTitle)].Value, SelectedFavourite.Name)">
+        <FluentIcon Value="@(new Icons.Filled.Size12.Star())" Width="12px" Class="favourite-active-tag-icon" />
+        <span class="favourite-active-tag-name">@SelectedFavourite.Name</span>
+    </span>
+}
+
 <FluentMenu Class="aspire-menu-container favourites-menu" Anchor="@_buttonId" @bind-Open="_open" VerticalThreshold="200" HorizontalThreshold="200">
     <FluentMenuItem OnClick="OnSaveClickedAsync">
         <span slot="start">
@@ -27,7 +36,14 @@
         @foreach (var fav in Favourites)
         {
             var current = fav;
-            <FluentMenuItem OnClick="() => OnApplyAsync(current)" Title="@current.Name" Class="favourite-menu-item">
+            var isActive = SelectedFavourite is not null && SelectedFavourite.Id == current.Id;
+            <FluentMenuItem OnClick="() => OnApplyAsync(current)" Title="@current.Name" Class="@($"favourite-menu-item{(isActive ? " favourite-menu-item-active" : string.Empty)}")">
+                <span slot="start">
+                    @if (isActive)
+                    {
+                        <FluentIcon Value="@(new Icons.Filled.Size16.Star())" Style="vertical-align: text-bottom;" Width="16px" Color="Color.Accent" />
+                    }
+                </span>
                 <span class="favourite-name">@current.Name</span>
                 <span slot="end" @onclick:stopPropagation="true">
                     <FluentButton Appearance="Appearance.Stealth"

@@ -1438,6 +1438,24 @@ namespace Aspire.Dashboard.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Active favourite: {0}.
+        /// </summary>
+        public static string FavouritesActiveTagTitle {
+            get {
+                return ResourceManager.GetString("FavouritesActiveTagTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Clear all filters.
+        /// </summary>
+        public static string ClearAllFiltersButtonTitle {
+            get {
+                return ResourceManager.GetString("ClearAllFiltersButtonTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Save filter as favourite.
         /// </summary>
         public static string SaveFavouriteDialogTitle {

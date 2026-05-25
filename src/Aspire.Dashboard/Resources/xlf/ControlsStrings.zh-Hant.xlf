@@ -92,6 +92,11 @@
         <target state="translated">無法顯示圖表</target>
         <note />
       </trans-unit>
+      <trans-unit id="ClearAllFiltersButtonTitle">
+        <source>Clear all filters</source>
+        <target state="new">Clear all filters</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ClearAllResources">
         <source>Remove all telemetry</source>
         <target state="needs-review-translation">全部移除</target>
@@ -190,6 +195,11 @@
       <trans-unit id="ViewJson">
         <source>View JSON</source>
         <target state="new">View JSON</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="FavouritesActiveTagTitle">
+        <source>Active favourite: {0}</source>
+        <target state="new">Active favourite: {0}</target>
         <note />
       </trans-unit>
       <trans-unit id="FavouritesButtonTitle">

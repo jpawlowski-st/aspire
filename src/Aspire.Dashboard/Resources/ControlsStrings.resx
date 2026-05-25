@@ -576,6 +576,12 @@
   <data name="FavouritesDeleteTitle" xml:space="preserve">
     <value>Delete favourite</value>
   </data>
+  <data name="FavouritesActiveTagTitle" xml:space="preserve">
+    <value>Active favourite: {0}</value>
+  </data>
+  <data name="ClearAllFiltersButtonTitle" xml:space="preserve">
+    <value>Clear all filters</value>
+  </data>
   <data name="SaveFavouriteDialogTitle" xml:space="preserve">
     <value>Save filter as favourite</value>
   </data>
