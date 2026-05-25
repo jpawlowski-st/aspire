@@ -331,6 +331,8 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
     private readonly _appHostSourceContents = new Map<string, string>();
     private _treeView: vscode.TreeView<TreeElement> | undefined;
 
+    private readonly _documentCloseSubscription: vscode.Disposable;
+
     constructor(
         private readonly _repository: AppHostDataRepository,
         private readonly _terminalProvider: AspireTerminalProvider,
@@ -340,6 +342,11 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
             this._onDidChangeTreeData.fire();
         });
         this._contentProviderRegistration = vscode.workspace.registerTextDocumentContentProvider('aspire-source', this);
+        this._documentCloseSubscription = vscode.workspace.onDidCloseTextDocument(doc => {
+            if (doc.uri.scheme === 'aspire-source') {
+                this._appHostSourceContents.delete(doc.uri.toString());
+            }
+        });
     }
 
     provideTextDocumentContent(uri: vscode.Uri): string {
@@ -369,6 +376,7 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
     dispose(): void {
         this._dataSubscription.dispose();
         this._contentProviderRegistration.dispose();
+        this._documentCloseSubscription.dispose();
         this._onDidChangeTreeData.dispose();
     }
 

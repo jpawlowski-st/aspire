@@ -55,8 +55,6 @@ export const processExceptionOccurred = (error: string, command: string) => vsco
 // Aspire panel strings
 export const pidDescription = (pid: number) => vscode.l10n.t('PID: {0}', pid);
 export const dashboardLabel = vscode.l10n.t('Dashboard');
-export const cliPidLabel = (pid: number) => vscode.l10n.t('CLI PID: {0}', pid);
-export const appHostPidLabel = (pid: number) => vscode.l10n.t('AppHost PID: {0}', pid);
 export const errorFetchingAppHosts = (error: string) => vscode.l10n.t('Error fetching running AppHosts: {0}', error);
 export const resourcesGroupLabel = vscode.l10n.t('Resources');
 export const noCommandsAvailable = vscode.l10n.t('No commands available for this resource.');
