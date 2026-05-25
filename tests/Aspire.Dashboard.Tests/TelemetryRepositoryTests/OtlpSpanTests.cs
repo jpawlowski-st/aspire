@@ -154,7 +154,7 @@ public class OtlpSpanTests
             },
             new object[]
             {
-                "SpanName!",
+                "SpanName! 200",
                 "SpanName!",
                 OtlpSpanKind.Server,
                 new KeyValuePair<string, string>[]
@@ -162,6 +162,24 @@ public class OtlpSpanTests
                     KeyValuePair.Create("http.method", "GET"),
                     KeyValuePair.Create("http.status_code", "200")
                 }
+            },
+            new object[]
+            {
+                "SpanName! 500",
+                "SpanName!",
+                OtlpSpanKind.Server,
+                new KeyValuePair<string, string>[]
+                {
+                    KeyValuePair.Create("http.request.method", "GET"),
+                    KeyValuePair.Create("http.response.status_code", "500")
+                }
+            },
+            new object[]
+            {
+                "SpanName!",
+                "SpanName!",
+                OtlpSpanKind.Server,
+                Array.Empty<KeyValuePair<string, string>>()
             },
         };
 

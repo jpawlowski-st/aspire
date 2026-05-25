@@ -222,6 +222,14 @@ public class OtlpSpan
                     return $"MSG {messagingSystem} {messagingOperation} {destinationName}";
                 }
             }
+            else if (span.Kind is OtlpSpanKind.Server)
+            {
+                var statusCode = span.Attributes.GetValueWithFallback("http.response.status_code", "http.status_code");
+                if (!string.IsNullOrEmpty(statusCode))
+                {
+                    return $"{span.Name} {statusCode}";
+                }
+            }
 
             return span.Name;
         }
