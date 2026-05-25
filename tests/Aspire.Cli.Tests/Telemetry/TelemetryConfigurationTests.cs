@@ -15,7 +15,6 @@ using Microsoft.AspNetCore.InternalTesting;
 
 namespace Aspire.Cli.Tests.Telemetry;
 
-[Collection(CliHostTestCollection.Name)]
 public class TelemetryConfigurationTests
 {
     private static async Task<IHost> BuildHostAsync(Dictionary<string, string?>? config = null)

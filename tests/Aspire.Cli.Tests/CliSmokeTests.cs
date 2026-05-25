@@ -6,7 +6,6 @@ using Microsoft.DotNet.RemoteExecutor;
 
 namespace Aspire.Cli.Tests;
 
-[Collection(CliHostTestCollection.Name)]
 public class CliSmokeTests(ITestOutputHelper outputHelper)
 {
     private static readonly RemoteInvokeOptions s_remoteInvokeOptions = new()
