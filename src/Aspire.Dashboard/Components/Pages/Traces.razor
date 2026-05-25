@@ -176,6 +176,13 @@
                                         <FluentIcon Icon="Icons.Filled.Size12.CheckmarkCircle" Color="Color.Success" Class="trace-status-icon" />
                                     }
                                     @GetSpanStatusLabel(status)
+                                    @{
+                                        var httpStatusCode = GetHttpStatusCode(context);
+                                    }
+                                    @if (!string.IsNullOrEmpty(httpStatusCode))
+                                    {
+                                        <span class="trace-http-status">@httpStatusCode</span>
+                                    }
                                 </span>
                             </AspireTemplateColumn>
                             <AspireTemplateColumn ColumnId="@SpansColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.TracesSpansColumnHeader)]">

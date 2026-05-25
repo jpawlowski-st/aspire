@@ -314,6 +314,27 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         _ => kind.ToString()
     };
 
+    private static string? GetHttpStatusCode(OtlpTrace trace)
+    {
+        // Prefer the root span (typically the inbound HTTP request), then fall back to any span with an HTTP status code.
+        var rootStatus = trace.RootOrFirstSpan.Attributes.GetValueWithFallback("http.response.status_code", "http.status_code");
+        if (!string.IsNullOrEmpty(rootStatus))
+        {
+            return rootStatus;
+        }
+
+        foreach (var span in trace.Spans)
+        {
+            var statusCode = span.Attributes.GetValueWithFallback("http.response.status_code", "http.status_code");
+            if (!string.IsNullOrEmpty(statusCode))
+            {
+                return statusCode;
+            }
+        }
+
+        return null;
+    }
+
     private string GetSpanStatusLabel(OtlpSpanStatusCode status) => status switch
     {
         OtlpSpanStatusCode.Ok => ControlsStringsLoc[nameof(ControlsStrings.SpanStatusOk)],

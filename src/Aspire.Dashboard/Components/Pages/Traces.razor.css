@@ -77,6 +77,11 @@
     color: var(--neutral-foreground-hint);
 }
 
+::deep .trace-http-status {
+    color: var(--neutral-foreground-hint);
+    font-size: 12px;
+}
+
 .page-header-with-favourites {
     display: flex;
     align-items: center;
