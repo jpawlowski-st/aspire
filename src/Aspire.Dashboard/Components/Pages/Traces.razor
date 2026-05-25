@@ -23,7 +23,13 @@
 <div class="page-content-container">
     <AspirePageContentLayout AddNewlineOnToolbar="true" @ref="@_contentLayout">
         <PageTitleSection>
-            <h1 class="page-header">@Loc[nameof(Dashboard.Resources.Traces.TracesHeader)]</h1>
+            <div class="page-header-with-favourites">
+                <h1 class="page-header">@Loc[nameof(Dashboard.Resources.Traces.TracesHeader)]</h1>
+                <FavouritesMenu Favourites="@_favourites"
+                                OnSaveCurrent="@SaveCurrentAsFavouriteAsync"
+                                OnApply="@ApplyFavouriteAsync"
+                                OnDelete="@DeleteFavouriteAsync" />
+            </div>
         </PageTitleSection>
         <ToolbarSection>
             <ResourceSelect Resources="_resourceViewModels"

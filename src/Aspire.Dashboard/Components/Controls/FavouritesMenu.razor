@@ -1,0 +1,51 @@
+@namespace Aspire.Dashboard.Components.Controls
+@using Aspire.Dashboard.Model.Favourites
+@using Aspire.Dashboard.Resources
+@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons
+
+@inject IStringLocalizer<ControlsStrings> Loc
+
+<FluentButton Id="@_buttonId"
+              Appearance="Appearance.Stealth"
+              Title="@Loc[nameof(ControlsStrings.FavouritesButtonTitle)]"
+              aria-label="@Loc[nameof(ControlsStrings.FavouritesButtonTitle)]"
+              OnClick="ToggleMenu">
+    <FluentIcon Value="@_starIcon" />
+</FluentButton>
+
+<FluentMenu Class="aspire-menu-container favourites-menu" Anchor="@_buttonId" @bind-Open="_open" VerticalThreshold="200" HorizontalThreshold="200">
+    <FluentMenuItem OnClick="OnSaveClickedAsync">
+        <span slot="start">
+            <FluentIcon Value="@(new Icons.Regular.Size16.Star())" Style="vertical-align: text-bottom;" Width="16px" />
+        </span>
+        @Loc[nameof(ControlsStrings.FavouritesSaveCurrent)]
+    </FluentMenuItem>
+
+    @if (Favourites is not null && Favourites.Count > 0)
+    {
+        <FluentDivider />
+        @foreach (var fav in Favourites)
+        {
+            var current = fav;
+            <FluentMenuItem OnClick="() => OnApplyAsync(current)" Title="@current.Name" Class="favourite-menu-item">
+                <span class="favourite-name">@current.Name</span>
+                <span slot="end" @onclick:stopPropagation="true">
+                    <FluentButton Appearance="Appearance.Stealth"
+                                  Title="@Loc[nameof(ControlsStrings.FavouritesDeleteTitle)]"
+                                  aria-label="@Loc[nameof(ControlsStrings.FavouritesDeleteTitle)]"
+                                  Class="favourite-delete-button"
+                                  OnClick="() => OnDeleteAsync(current)">
+                        <FluentIcon Value="@(new Icons.Regular.Size16.Dismiss())" />
+                    </FluentButton>
+                </span>
+            </FluentMenuItem>
+        }
+    }
+    else
+    {
+        <FluentDivider />
+        <FluentMenuItem Disabled="true">
+            <span class="favourites-empty">@Loc[nameof(ControlsStrings.FavouritesNoFavourites)]</span>
+        </FluentMenuItem>
+    }
+</FluentMenu>

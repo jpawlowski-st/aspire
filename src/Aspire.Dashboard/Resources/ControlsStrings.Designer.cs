@@ -1400,5 +1400,86 @@ namespace Aspire.Dashboard.Resources {
                 return ResourceManager.GetString("VolumePathColumnHeader", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Favourites.
+        /// </summary>
+        public static string FavouritesButtonTitle {
+            get {
+                return ResourceManager.GetString("FavouritesButtonTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Save current filter….
+        /// </summary>
+        public static string FavouritesSaveCurrent {
+            get {
+                return ResourceManager.GetString("FavouritesSaveCurrent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to No saved favourites.
+        /// </summary>
+        public static string FavouritesNoFavourites {
+            get {
+                return ResourceManager.GetString("FavouritesNoFavourites", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Delete favourite.
+        /// </summary>
+        public static string FavouritesDeleteTitle {
+            get {
+                return ResourceManager.GetString("FavouritesDeleteTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Save filter as favourite.
+        /// </summary>
+        public static string SaveFavouriteDialogTitle {
+            get {
+                return ResourceManager.GetString("SaveFavouriteDialogTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name.
+        /// </summary>
+        public static string SaveFavouriteDialogNameLabel {
+            get {
+                return ResourceManager.GetString("SaveFavouriteDialogNameLabel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Enter a name for this favourite.
+        /// </summary>
+        public static string SaveFavouriteDialogNamePlaceholder {
+            get {
+                return ResourceManager.GetString("SaveFavouriteDialogNamePlaceholder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Save.
+        /// </summary>
+        public static string SaveFavouriteDialogSaveButton {
+            get {
+                return ResourceManager.GetString("SaveFavouriteDialogSaveButton", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Cancel.
+        /// </summary>
+        public static string SaveFavouriteDialogCancelButton {
+            get {
+                return ResourceManager.GetString("SaveFavouriteDialogCancelButton", resourceCulture);
+            }
+        }
     }
 }

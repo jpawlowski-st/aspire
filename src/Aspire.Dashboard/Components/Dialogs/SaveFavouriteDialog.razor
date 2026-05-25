@@ -1,0 +1,34 @@
+@using Aspire.Dashboard.Resources
+@implements IDialogContentComponent<SaveFavouriteDialog.SaveFavouriteDialogViewModel>
+
+@inject IStringLocalizer<ControlsStrings> Loc
+
+<FluentDialogHeader ShowDismiss="true">
+    <FluentLabel Typo="Typography.PaneHeader">
+        @Loc[nameof(ControlsStrings.SaveFavouriteDialogTitle)]
+    </FluentLabel>
+</FluentDialogHeader>
+
+<FluentDialogBody>
+    <EditForm EditContext="@_editContext" OnValidSubmit="@SaveAsync">
+        <FluentTextField @ref="_nameField"
+                         @bind-Value="_name"
+                         Required="true"
+                         Maxlength="100"
+                         Label="@Loc[nameof(ControlsStrings.SaveFavouriteDialogNameLabel)]"
+                         Placeholder="@Loc[nameof(ControlsStrings.SaveFavouriteDialogNamePlaceholder)]"
+                         AutoComplete="off"
+                         Style="width: 100%" />
+        @* Hidden submit so Enter submits the form. *@
+        <button type="submit" style="display:none"></button>
+    </EditForm>
+</FluentDialogBody>
+
+<FluentDialogFooter>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync" Disabled="@string.IsNullOrWhiteSpace(_name)">
+        @Loc[nameof(ControlsStrings.SaveFavouriteDialogSaveButton)]
+    </FluentButton>
+    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">
+        @Loc[nameof(ControlsStrings.SaveFavouriteDialogCancelButton)]
+    </FluentButton>
+</FluentDialogFooter>

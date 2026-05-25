@@ -423,6 +423,7 @@ public sealed class DashboardWebApplication : IAsyncDisposable
         builder.Services.AddScoped<BrowserTimeProvider>();
         builder.Services.AddScoped<ILocalStorage, LocalBrowserStorage>();
         builder.Services.AddScoped<ISessionStorage, SessionBrowserStorage>();
+        builder.Services.AddScoped<Model.Favourites.FavouritesStore>();
 
         builder.Services.AddSingleton<IKnownPropertyLookup, KnownPropertyLookup>();
 

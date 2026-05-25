@@ -8,6 +8,7 @@ using Aspire.Dashboard.Components.Layout;
 using Aspire.Dashboard.Configuration;
 using Aspire.Dashboard.Extensions;
 using Aspire.Dashboard.Model;
+using Aspire.Dashboard.Model.Favourites;
 using Aspire.Dashboard.Model.GenAI;
 using Aspire.Dashboard.Model.Otlp;
 using Aspire.Dashboard.Otlp.Model;
@@ -59,6 +60,9 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
     private AspireFluentDataGrid<TraceSummary> _dataGrid = null!;
     private GridColumnManager _manager = null!;
 
+    private List<SavedFavourite> _favourites = new();
+    private const string FavouritesPageKey = "Traces";
+
     public string SessionStorageKey => BrowserStorageKeys.TracesPageState;
     public string BasePath => DashboardUrls.TracesBasePath;
     public TracesPageViewModel PageViewModel { get; set; } = null!;
@@ -106,6 +110,9 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
 
     [Inject]
     public required ITelemetryErrorRecorder ErrorRecorder { get; init; }
+
+    [Inject]
+    public required FavouritesStore FavouritesStore { get; init; }
 
     [CascadingParameter]
     public required ViewportInformation ViewportInformation { get; set; }
@@ -334,6 +341,9 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
             // Focus the scroll container without showing the focus ring. The container is a large
             // content area where a visible focus indicator would be visually noisy on initial load.
             await JS.InvokeVoidAsync("focusElement", ScrollContainerId, true);
+
+            _favourites = await FavouritesStore.GetAsync(FavouritesPageKey);
+            StateHasChanged();
         }
 
         if (_endAnchorItemsProviderState.TryBeginRefresh())
@@ -355,6 +365,50 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         _cts.Dispose();
         _resourcesSubscription?.Dispose();
         _tracesSubscription?.Dispose();
+    }
+
+    private async Task SaveCurrentAsFavouriteAsync()
+    {
+        var url = GetUrlFromSerializableViewModel(ConvertViewModelToSerializable());
+
+        var parameters = new DialogParameters
+        {
+            Title = ControlsStringsLoc[nameof(ControlsStrings.SaveFavouriteDialogTitle)],
+            TrapFocus = true,
+            Modal = true,
+            Width = "400px",
+            Height = "auto",
+            OnDialogResult = DialogService.CreateDialogCallback(this, result => OnSaveFavouriteDialogClosedAsync(result, url, _filter)),
+        };
+
+        await DialogService.ShowDialogAsync<SaveFavouriteDialog>(new SaveFavouriteDialog.SaveFavouriteDialogViewModel(), parameters);
+    }
+
+    private async Task OnSaveFavouriteDialogClosedAsync(DialogResult result, string url, string filterText)
+    {
+        if (result.Cancelled || result.Data is not string name || string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        var added = await FavouritesStore.AddAsync(FavouritesPageKey, name.Trim(), url, filterText);
+        _favourites.Add(added);
+        StateHasChanged();
+    }
+
+    private Task ApplyFavouriteAsync(SavedFavourite favourite)
+    {
+        _filter = favourite.FilterText ?? string.Empty;
+        TracesViewModel.FilterText = _filter;
+        NavigationManager.NavigateTo(favourite.Url);
+        return Task.CompletedTask;
+    }
+
+    private async Task DeleteFavouriteAsync(SavedFavourite favourite)
+    {
+        await FavouritesStore.RemoveAsync(FavouritesPageKey, favourite.Id);
+        _favourites.RemoveAll(f => f.Id == favourite.Id);
+        StateHasChanged();
     }
 
     public async Task UpdateViewModelFromQueryAsync(TracesPageViewModel viewModel)

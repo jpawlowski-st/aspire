@@ -564,4 +564,31 @@
   <data name="Download" xml:space="preserve">
     <value>Download</value>
   </data>
+  <data name="FavouritesButtonTitle" xml:space="preserve">
+    <value>Favourites</value>
+  </data>
+  <data name="FavouritesSaveCurrent" xml:space="preserve">
+    <value>Save current filter…</value>
+  </data>
+  <data name="FavouritesNoFavourites" xml:space="preserve">
+    <value>No saved favourites</value>
+  </data>
+  <data name="FavouritesDeleteTitle" xml:space="preserve">
+    <value>Delete favourite</value>
+  </data>
+  <data name="SaveFavouriteDialogTitle" xml:space="preserve">
+    <value>Save filter as favourite</value>
+  </data>
+  <data name="SaveFavouriteDialogNameLabel" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="SaveFavouriteDialogNamePlaceholder" xml:space="preserve">
+    <value>Enter a name for this favourite</value>
+  </data>
+  <data name="SaveFavouriteDialogSaveButton" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SaveFavouriteDialogCancelButton" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
 </root>

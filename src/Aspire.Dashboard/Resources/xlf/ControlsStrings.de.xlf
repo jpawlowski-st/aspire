@@ -192,6 +192,26 @@
         <target state="new">View JSON</target>
         <note />
       </trans-unit>
+      <trans-unit id="FavouritesButtonTitle">
+        <source>Favourites</source>
+        <target state="new">Favourites</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="FavouritesDeleteTitle">
+        <source>Delete favourite</source>
+        <target state="new">Delete favourite</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="FavouritesNoFavourites">
+        <source>No saved favourites</source>
+        <target state="new">No saved favourites</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="FavouritesSaveCurrent">
+        <source>Save current filter…</source>
+        <target state="new">Save current filter…</target>
+        <note />
+      </trans-unit>
       <trans-unit id="FilterPlaceholder">
         <source>Filter...</source>
         <target state="translated">Filtern...</target>
@@ -517,6 +537,31 @@
         <target state="translated">Fortsetzen eingehender Daten</target>
         <note />
       </trans-unit>
+      <trans-unit id="SaveFavouriteDialogCancelButton">
+        <source>Cancel</source>
+        <target state="new">Cancel</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SaveFavouriteDialogNameLabel">
+        <source>Name</source>
+        <target state="new">Name</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SaveFavouriteDialogNamePlaceholder">
+        <source>Enter a name for this favourite</source>
+        <target state="new">Enter a name for this favourite</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SaveFavouriteDialogSaveButton">
+        <source>Save</source>
+        <target state="new">Save</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="SaveFavouriteDialogTitle">
+        <source>Save filter as favourite</source>
+        <target state="new">Save filter as favourite</target>
+        <note />
+      </trans-unit>
       <trans-unit id="SelectAResource">
         <source>Select a resource</source>
         <target state="translated">Ressource auswählen</target>
@@ -611,7 +656,8 @@
         <source>Server</source>
         <target state="new">Server</target>
         <note />
-      </trans-unit>      <trans-unit id="SpanStatusError">
+      </trans-unit>
+      <trans-unit id="SpanStatusError">
         <source>Error</source>
         <target state="new">Error</target>
         <note />
