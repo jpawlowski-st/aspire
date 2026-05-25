@@ -8,6 +8,7 @@ using Aspire.Dashboard.Components.Layout;
 using Aspire.Dashboard.Configuration;
 using Aspire.Dashboard.Extensions;
 using Aspire.Dashboard.Model;
+using Aspire.Dashboard.Model.Favourites;
 using Aspire.Dashboard.Model.GenAI;
 using Aspire.Dashboard.Model.Otlp;
 using Aspire.Dashboard.Otlp.Model;
@@ -55,6 +56,8 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
     private AspireFluentDataGrid<LogSummary>? _dataGrid;
     private GridColumnManager _manager = null!;
     private IList<GridColumn> _gridColumns = null!;
+    private List<SavedFavourite> _favourites = new();
+    private const string FavouritesPageKey = "StructuredLogs";
 
     public string BasePath => DashboardUrls.StructuredLogsBasePath;
     public string SessionStorageKey => BrowserStorageKeys.StructuredLogsPageState;
@@ -100,6 +103,9 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
 
     [Inject]
     public required ComponentTelemetryContextProvider TelemetryContextProvider { get; init; }
+
+    [Inject]
+    public required FavouritesStore FavouritesStore { get; init; }
 
     [CascadingParameter]
     public required ViewportInformation ViewportInformation { get; set; }
@@ -433,6 +439,9 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
             // Focus the scroll container without showing the focus ring. The container is a large
             // content area where a visible focus indicator would be visually noisy on initial load.
             await JS.InvokeVoidAsync("focusElement", ScrollContainerId, true);
+
+            _favourites = await FavouritesStore.GetAsync(FavouritesPageKey);
+            StateHasChanged();
         }
 
         if (_pendingFocusElementId is { } pendingFocusElementId)
@@ -460,6 +469,50 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
         _resourcesSubscription?.Dispose();
         _logsSubscription?.Dispose();
         TelemetryContext.Dispose();
+    }
+
+    private async Task SaveCurrentAsFavouriteAsync()
+    {
+        var url = GetUrlFromSerializableViewModel(ConvertViewModelToSerializable());
+
+        var parameters = new DialogParameters
+        {
+            Title = ControlsStringsLoc[nameof(ControlsStrings.SaveFavouriteDialogTitle)],
+            TrapFocus = true,
+            Modal = true,
+            Width = "400px",
+            Height = "auto",
+            OnDialogResult = DialogService.CreateDialogCallback(this, result => OnSaveFavouriteDialogClosedAsync(result, url, _filter)),
+        };
+
+        await DialogService.ShowDialogAsync<SaveFavouriteDialog>(new SaveFavouriteDialog.SaveFavouriteDialogViewModel(), parameters);
+    }
+
+    private async Task OnSaveFavouriteDialogClosedAsync(DialogResult result, string url, string filterText)
+    {
+        if (result.Cancelled || result.Data is not string name || string.IsNullOrWhiteSpace(name))
+        {
+            return;
+        }
+
+        var added = await FavouritesStore.AddAsync(FavouritesPageKey, name.Trim(), url, filterText);
+        _favourites.Add(added);
+        StateHasChanged();
+    }
+
+    private Task ApplyFavouriteAsync(SavedFavourite favourite)
+    {
+        _filter = favourite.FilterText ?? string.Empty;
+        ViewModel.FilterText = _filter;
+        NavigationManager.NavigateTo(favourite.Url);
+        return Task.CompletedTask;
+    }
+
+    private async Task DeleteFavouriteAsync(SavedFavourite favourite)
+    {
+        await FavouritesStore.RemoveAsync(FavouritesPageKey, favourite.Id);
+        _favourites.RemoveAll(f => f.Id == favourite.Id);
+        StateHasChanged();
     }
 
     public string GetUrlFromSerializableViewModel(StructuredLogsPageState serializable)

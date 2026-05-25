@@ -47,3 +47,9 @@
     color: var(--neutral-foreground-hint);
     font-style: italic;
 }
+
+.page-header-with-favourites {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

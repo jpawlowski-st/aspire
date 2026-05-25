@@ -25,7 +25,13 @@
                              IsSummaryDetailsViewOpen="@(PageViewModel.SelectedLogEntry is not null)"
                              HideDesktopToolbar="@ViewportInformation.IsDesktop">
         <PageTitleSection>
-            <h1 class="page-header">@Loc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsHeader)]</h1>
+            <div class="page-header-with-favourites">
+                <h1 class="page-header">@Loc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsHeader)]</h1>
+                <FavouritesMenu Favourites="@_favourites"
+                                OnSaveCurrent="@SaveCurrentAsFavouriteAsync"
+                                OnApply="@ApplyFavouriteAsync"
+                                OnDelete="@DeleteFavouriteAsync" />
+            </div>
         </PageTitleSection>
         <ToolbarSection>
             @GetFilterToolbar()
