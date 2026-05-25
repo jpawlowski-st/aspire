@@ -326,6 +326,9 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
     private readonly _onDidChangeTreeData = new vscode.EventEmitter<TreeElement | undefined | void>();
     readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
+    private readonly _onDidChangeContent = new vscode.EventEmitter<vscode.Uri>();
+    readonly onDidChange = this._onDidChangeContent.event;
+
     private readonly _dataSubscription: vscode.Disposable;
     private readonly _contentProviderRegistration: vscode.Disposable;
     private readonly _appHostSourceContents = new Map<string, string>();
@@ -378,6 +381,7 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
         this._contentProviderRegistration.dispose();
         this._documentCloseSubscription.dispose();
         this._onDidChangeTreeData.dispose();
+        this._onDidChangeContent.dispose();
     }
 
     setTreeView(treeView: vscode.TreeView<TreeElement>): void {
@@ -749,9 +753,16 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
 
     async viewAppHostLogFile(element: unknown): Promise<void> {
         const filePath = element instanceof LogFileItem ? element.logFilePath : element as string;
-        const uri = vscode.Uri.file(filePath);
-        const document = await vscode.workspace.openTextDocument(uri);
-        await vscode.window.showTextDocument(document, { preview: false });
+        if (!filePath || typeof filePath !== 'string') {
+            return;
+        }
+        try {
+            const uri = vscode.Uri.file(filePath);
+            const document = await vscode.workspace.openTextDocument(uri);
+            await vscode.window.showTextDocument(document, { preview: false });
+        } catch {
+            vscode.window.showWarningMessage(appHostSourceOpenFailed(filePath));
+        }
     }
 
     async copyLogFilePath(element: LogFileItem): Promise<void> {
@@ -780,6 +791,7 @@ export class AspireAppHostTreeProvider implements vscode.TreeDataProvider<TreeEl
         const json = JSON.stringify(appHost, null, 2);
         const uri = vscode.Uri.parse(`aspire-source:AppHost-${appHost.appHostPid}.json`);
         this._appHostSourceContents.set(uri.toString(), json);
+        this._onDidChangeContent.fire(uri);
         const document = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(document, { preview: true });
     }
