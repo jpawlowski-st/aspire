@@ -121,6 +121,7 @@ export const selectFileTitle = vscode.l10n.t('Select file');
 export const enterPipelineStep = vscode.l10n.t('Enter the pipeline step to execute');
 export const appHostSourceNotFound = vscode.l10n.t('Could not determine the AppHost source file to open.');
 export const appHostSourceOpenFailed = (path: string) => vscode.l10n.t('Failed to open AppHost source file: {0}', path);
+export const logFileLabel = vscode.l10n.t('AppHost logs');
 
 // CodeLens strings.
 // The "\u200A" between the codicon and the label is U+200A HAIR SPACE; it adds
