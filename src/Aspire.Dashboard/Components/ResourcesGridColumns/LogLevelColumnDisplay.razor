@@ -12,6 +12,14 @@ else if (LogEntry.IsWarning)
 {
     <FluentIcon Icon="Icons.Filled.Size16.Warning" Color="Color.Warning" Class="severity-icon"/>
 }
+else if (LogEntry.Severity is LogLevel.Debug)
+{
+    <FluentIcon Icon="Icons.Filled.Size16.Bug" Color="Color.Neutral" Class="severity-icon"/>
+}
+else if (LogEntry.Severity is LogLevel.Information)
+{
+    <FluentIcon Icon="Icons.Filled.Size16.Info" Color="Color.Info" Class="severity-icon"/>
+}
 
 @LogEntry.Severity
 

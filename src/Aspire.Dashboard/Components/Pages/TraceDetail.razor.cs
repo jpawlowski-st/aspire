@@ -49,6 +49,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
     private GridColumnManager _manager = null!;
     private IList<GridColumn> _gridColumns = null!;
     private readonly List<MenuButtonItem> _traceActionsMenuItems = [];
+    private bool _showLogEntries = true;
     private AspirePageContentLayout? _layout;
     private List<SelectViewModel<SpanType>> _spanTypes = default!;
 
@@ -145,6 +146,17 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
             IsDisabled = !HasExpandedSpans()
         });
 
+        _traceActionsMenuItems.Add(new MenuButtonItem
+        {
+            Text = Loc[_showLogEntries
+                ? nameof(Dashboard.Resources.TraceDetail.TraceDetailHideLogEntries)
+                : nameof(Dashboard.Resources.TraceDetail.TraceDetailShowLogEntries)],
+            Icon = _showLogEntries
+                ? new Icons.Regular.Size16.EyeOff()
+                : new Icons.Regular.Size16.Eye(),
+            OnClick = ToggleLogEntriesAsync
+        });
+
         // Add divider
         _traceActionsMenuItems.Add(new MenuButtonItem
         {
@@ -186,10 +198,14 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
     {
         Debug.Assert(PageViewModel.SpanWaterfallViewModels is not null);
 
-        return SpanWaterfallViewModel.CreateDisplayRows(
+        var rows = SpanWaterfallViewModel.CreateDisplayRows(
             PageViewModel.SpanWaterfallViewModels,
             GetVisibleSpanViewModels(),
             _traceLogs);
+
+        return _showLogEntries
+            ? rows
+            : rows.Where(row => row.LogEntry is null).ToList();
     }
 
     internal string? GetPageTitle()
@@ -563,6 +579,24 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
         }
 
         await RefreshSpanViewAsync();
+    }
+
+    private async Task ToggleLogEntriesAsync()
+    {
+        _showLogEntries = !_showLogEntries;
+        if (!_showLogEntries && PageViewModel.SelectedData?.LogEntryViewModel is not null)
+        {
+            await ClearSelectedSpanAsync();
+        }
+
+        UpdateTraceActionsMenu();
+        await _dataGrid.SafeRefreshDataAsync();
+        await InvokeAsync(StateHasChanged);
+
+        if (_layout is not null)
+        {
+            await _layout.CloseMobileToolbarAsync();
+        }
     }
 
     private string GetResourceName(OtlpResourceView app) => OtlpResource.GetResourceName(app, _resources);

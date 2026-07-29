@@ -267,10 +267,12 @@
 
 ::deep .trace-log-timestamp {
     background: var(--accent-fill-rest);
-    height: 100%;
+    border-radius: 50%;
+    height: 10px;
     position: absolute;
-    transform: translateX(-50%);
-    width: 2px;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
 }
 
 ::deep .trace-log-timestamp-error {

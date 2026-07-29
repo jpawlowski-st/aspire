@@ -41,7 +41,8 @@ public class OtlpTrace
     {
         if (Spans.Contains(span.SpanId))
         {
-            throw new InvalidOperationException($"Duplicate span id '{span.SpanId}' detected.");
+            //throw new InvalidOperationException($"Duplicate span id '{span.SpanId}' detected.");
+            return;
         }
 
         var insertIndex = 0;
