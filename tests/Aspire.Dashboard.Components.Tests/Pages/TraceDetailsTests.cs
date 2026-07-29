@@ -576,6 +576,26 @@ public partial class TraceDetailsTests : DashboardTestContext
         Assert.Equal(0, data.Items.ElementAt(3).Depth);
 
         cut.WaitForAssertion(() => Assert.Equal(2, cut.FindAll(".trace-log-overview").Count));
+
+        var menuButton = cut.FindComponent<AspireMenuButton>();
+        var hideLogEntriesMenuItem = menuButton.Instance.Items.Single(item => item.Text == "Hide log entries");
+
+        await cut.InvokeAsync(() => hideLogEntriesMenuItem.OnClick?.Invoke() ?? Task.CompletedTask);
+
+        data = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
+        Assert.Collection(data.Items,
+            row => Assert.Equal("Test span. Id: 726F6F74", row.SpanViewModel!.Span.Name),
+            row => Assert.Equal("Test span. Id: 6368696C64", row.SpanViewModel!.Span.Name));
+
+        var showLogEntriesMenuItem = menuButton.Instance.Items.Single(item => item.Text == "Show log entries");
+        await cut.InvokeAsync(() => showLogEntriesMenuItem.OnClick?.Invoke() ?? Task.CompletedTask);
+
+        data = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
+        Assert.Collection(data.Items,
+            row => Assert.Equal("Test span. Id: 726F6F74", row.SpanViewModel!.Span.Name),
+            row => Assert.Equal("span log", row.LogEntry!.Message),
+            row => Assert.Equal("Test span. Id: 6368696C64", row.SpanViewModel!.Span.Name),
+            row => Assert.Equal("trace log", row.LogEntry!.Message));
     }
 
     [Fact]
