@@ -70,7 +70,7 @@ public sealed class SpanWaterfallViewModel
     public static List<SpanWaterfallViewModel> Create(OtlpTrace trace, List<LogSummary> logs, TraceDetailState state)
     {
         var orderedSpans = new List<SpanWaterfallViewModel>();
-        var groupedLogs = logs.GroupBy(l => l.SpanId, StringComparer.OrdinalIgnoreCase).ToDictionary(l => l.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+        var groupedLogs = logs.GroupBy(GetParentSpanId, StringComparer.OrdinalIgnoreCase).ToDictionary(l => l.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
         var currentSpanLogIndex = 0;
 
         TraceHelpers.VisitSpans(trace, (OtlpSpan span, SpanWaterfallViewModelState s) =>
@@ -172,7 +172,7 @@ public sealed class SpanWaterfallViewModel
         // rather than silently dropping them because instrumentation can emit a trace ID without
         // a span ID, for example when logging after the active Activity has stopped.
         var traceLevelLogs = traceLogs
-            .Where(log => !spanIds.Contains(log.SpanId))
+            .Where(log => !spanIds.Contains(GetParentSpanId(log)))
             .Select(log => new TraceDetailChild(log.TimeStamp, log.InternalId, SpanViewModel: null, LogEntry: log))
             .ToList();
 
@@ -196,6 +196,14 @@ public sealed class SpanWaterfallViewModel
             if (child.SpanViewModel is { } spanViewModel)
             {
                 rows.Add(TraceDetailRowViewModel.CreateSpan(spanViewModel));
+
+                // Collapsing a span hides its entire subtree. The log rows are direct children
+                // of the span in this display hierarchy, so they must be hidden alongside child
+                // spans instead of continuing to appear below the collapsed parent.
+                if (spanViewModel.IsCollapsed)
+                {
+                    return;
+                }
 
                 var children = spanViewModel.Children
                     .Where(visibleSpanSet.Contains)
@@ -229,6 +237,8 @@ public sealed class SpanWaterfallViewModel
         // Fallback to the peer address.
         return OtlpHelpers.GetPeerAddress(span.Attributes);
     }
+
+    private static string GetParentSpanId(LogSummary log) => log.SpanId;
 
     private sealed record TraceDetailChild(DateTime Timestamp, long SortKey, SpanWaterfallViewModel? SpanViewModel, LogSummary? LogEntry);
 }

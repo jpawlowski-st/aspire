@@ -123,6 +123,15 @@ public sealed class SpanWaterfallViewModelTests
             row => Assert.Equal("trace log", row.LogEntry!.Message));
         Assert.Equal(1, rows[1].Depth);
         Assert.Equal(0, rows[3].Depth);
+
+        // Collapsing a span hides its child spans and its direct log rows, while trace-level
+        // logs remain visible because they are not part of the collapsed span subtree.
+        spans[0].IsCollapsed = true;
+        var collapsedRows = SpanWaterfallViewModel.CreateDisplayRows(spans, spans.Where(span => !span.IsHidden), [spanLog, traceLog]);
+
+        Assert.Collection(collapsedRows,
+            row => Assert.Equal("726F6F74", row.SpanViewModel!.Span.SpanId),
+            row => Assert.Equal("trace log", row.LogEntry!.Message));
     }
 
     [Fact]
