@@ -89,6 +89,7 @@
 
 ::deep .ticks {
     width: 100%;
+    padding: 0 5px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     align-items: center;
@@ -267,7 +268,8 @@
 
 ::deep .trace-log-timestamp-container {
     grid-column: 1 / 6;
-    height: 100%;
+    grid-row: 1;
+    align-self: stretch;
     position: relative;
 }
 
