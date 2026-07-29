@@ -252,6 +252,12 @@
     padding-left: 24px;
 }
 
+::deep .trace-log-overview .severity-icon {
+    flex: 0 0 16px;
+    height: 16px;
+    width: 16px;
+}
+
 ::deep .trace-log-message {
     color: var(--foreground-subtext-rest);
     overflow: hidden;

@@ -105,6 +105,7 @@ public class OtlpSpan
     {
         var props = new List<OtlpDisplayField>
         {
+            new OtlpDisplayField { DisplayName = "Timestamp", Key = KnownTraceFields.TimestampField, Value = StartTime.ToString("O", CultureInfo.InvariantCulture) },
             new OtlpDisplayField { DisplayName = "SpanId", Key = KnownTraceFields.SpanIdField, Value = SpanId },
             new OtlpDisplayField { DisplayName = "Name", Key = KnownTraceFields.NameField, Value = Name },
             new OtlpDisplayField { DisplayName = "Kind", Key = KnownTraceFields.KindField, Value = Kind.ToString() },

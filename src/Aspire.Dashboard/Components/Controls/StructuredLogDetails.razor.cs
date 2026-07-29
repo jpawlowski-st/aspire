@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Globalization;
 using Aspire.Dashboard.Components.Controls.PropertyValues;
 using Aspire.Dashboard.Components.Pages;
 using Aspire.Dashboard.Model;
@@ -105,6 +106,7 @@ public partial class StructuredLogDetails : IDisposable
 
             _logEntryAttributes =
             [
+                new TelemetryPropertyViewModel { Name = "Timestamp", Key = KnownStructuredLogFields.TimestampField, Value = _viewModel.LogEntry.TimeStamp.ToString("O", CultureInfo.InvariantCulture) },
                 new TelemetryPropertyViewModel { Name = "Level", Key = KnownStructuredLogFields.LevelField, Value = _viewModel.LogEntry.Severity.ToString() },
                 new TelemetryPropertyViewModel
                 {
