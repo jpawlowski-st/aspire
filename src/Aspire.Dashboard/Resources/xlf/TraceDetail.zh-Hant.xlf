@@ -12,6 +12,11 @@
         <target state="translated">期間</target>
         <note />
       </trans-unit>
+      <trans-unit id="TraceDetailHideLogEntries">
+        <source>Hide log entries</source>
+        <target state="new">Hide log entries</target>
+        <note />
+      </trans-unit>
       <trans-unit id="TraceDetailMobileToolbarButtonText">
         <source>Trace details</source>
         <target state="translated">追蹤詳細資料</target>
@@ -40,6 +45,11 @@
       <trans-unit id="TraceDetailResourcesHeader">
         <source>Resources</source>
         <target state="translated">資源</target>
+        <note />
+      </trans-unit>
+      <trans-unit id="TraceDetailShowLogEntries">
+        <source>Show log entries</source>
+        <target state="new">Show log entries</target>
         <note />
       </trans-unit>
       <trans-unit id="TraceDetailTotalSpansHeader">

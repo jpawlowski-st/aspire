@@ -70,6 +70,15 @@ namespace Aspire.Dashboard.Resources {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Hide log entries.
+        /// </summary>
+        public static string TraceDetailHideLogEntries {
+            get {
+                return ResourceManager.GetString("TraceDetailHideLogEntries", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Duration.
         /// </summary>
         public static string TraceDetailDurationHeader {
@@ -123,6 +132,15 @@ namespace Aspire.Dashboard.Resources {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to Show log entries.
+        /// </summary>
+        public static string TraceDetailShowLogEntries {
+            get {
+                return ResourceManager.GetString("TraceDetailShowLogEntries", resourceCulture);
+            }
+        }
+        
         /// <summary>
         ///   Looks up a localized string similar to Resources.
         /// </summary>
