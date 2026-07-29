@@ -244,6 +244,39 @@
     min-width: 300px;
 }
 
+::deep .trace-log-overview {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+    min-width: 0;
+    padding-left: 24px;
+}
+
+::deep .trace-log-message {
+    color: var(--foreground-subtext-rest);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+::deep .trace-log-timestamp-container {
+    grid-column: 1 / 6;
+    height: 100%;
+    position: relative;
+}
+
+::deep .trace-log-timestamp {
+    background: var(--accent-fill-rest);
+    height: 100%;
+    position: absolute;
+    transform: translateX(-50%);
+    width: 2px;
+}
+
+::deep .trace-log-timestamp-error {
+    background: var(--error);
+}
+
 ::deep .trace-header-filters {
     grid-area: filters;
     min-width: 0;

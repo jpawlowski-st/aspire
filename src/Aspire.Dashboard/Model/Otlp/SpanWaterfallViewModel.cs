@@ -70,7 +70,7 @@ public sealed class SpanWaterfallViewModel
     public static List<SpanWaterfallViewModel> Create(OtlpTrace trace, List<LogSummary> logs, TraceDetailState state)
     {
         var orderedSpans = new List<SpanWaterfallViewModel>();
-        var groupedLogs = logs.GroupBy(l => l.SpanId).ToDictionary(l => l.Key, g => g.ToList());
+        var groupedLogs = logs.GroupBy(l => l.SpanId, StringComparer.OrdinalIgnoreCase).ToDictionary(l => l.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
         var currentSpanLogIndex = 0;
 
         TraceHelpers.VisitSpans(trace, (OtlpSpan span, SpanWaterfallViewModelState s) =>
@@ -155,6 +155,67 @@ public sealed class SpanWaterfallViewModel
         }
     }
 
+    /// <summary>
+    /// Creates the visible trace detail rows, preserving the span tree and interleaving each
+    /// span's direct log entries with its child spans in timestamp order.
+    /// </summary>
+    public static List<TraceDetailRowViewModel> CreateDisplayRows(
+        IReadOnlyList<SpanWaterfallViewModel> allSpans,
+        IEnumerable<SpanWaterfallViewModel> visibleSpans,
+        IReadOnlyList<LogSummary> traceLogs)
+    {
+        var visibleSpanSet = visibleSpans.ToHashSet();
+        var spanIds = allSpans.Select(vm => vm.Span.SpanId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var rows = new List<TraceDetailRowViewModel>();
+
+        // Logs without a known span are still part of the trace. Render them at the trace level
+        // rather than silently dropping them because instrumentation can emit a trace ID without
+        // a span ID, for example when logging after the active Activity has stopped.
+        var traceLevelLogs = traceLogs
+            .Where(log => !spanIds.Contains(log.SpanId))
+            .Select(log => new TraceDetailChild(log.TimeStamp, log.InternalId, SpanViewModel: null, LogEntry: log))
+            .ToList();
+
+        var childSpans = allSpans
+            .SelectMany(parent => parent.Children.Select(child => (Parent: parent, Child: child)))
+            .ToDictionary(item => item.Child, item => item.Parent);
+
+        var rootSpans = allSpans
+            .Where(span => visibleSpanSet.Contains(span) && !childSpans.ContainsKey(span))
+            .Select(span => new TraceDetailChild(span.Span.StartTime, 0, span, LogEntry: null));
+
+        foreach (var child in rootSpans.Concat(traceLevelLogs).OrderBy(child => child.Timestamp).ThenBy(child => child.SortKey))
+        {
+            AddRows(child, parentDepth: 0);
+        }
+
+        return rows;
+
+        void AddRows(TraceDetailChild child, int parentDepth)
+        {
+            if (child.SpanViewModel is { } spanViewModel)
+            {
+                rows.Add(TraceDetailRowViewModel.CreateSpan(spanViewModel));
+
+                var children = spanViewModel.Children
+                    .Where(visibleSpanSet.Contains)
+                    .Select(span => new TraceDetailChild(span.Span.StartTime, 0, span, LogEntry: null))
+                    .Concat(spanViewModel.SpanLogs.Select(log => new TraceDetailChild(log.LogEntry.TimeStamp, log.LogEntry.InternalId, SpanViewModel: null, LogEntry: log.LogEntry)))
+                    .OrderBy(entry => entry.Timestamp)
+                    .ThenBy(entry => entry.SortKey);
+
+                foreach (var spanChild in children)
+                {
+                    AddRows(spanChild, spanViewModel.Depth);
+                }
+            }
+            else if (child.LogEntry is { } logEntry)
+            {
+                rows.Add(TraceDetailRowViewModel.CreateLog(logEntry, parentDepth));
+            }
+        }
+    }
+
     private static string? ResolveUninstrumentedPeerName(OtlpSpan span, List<OtlpResource> allResources)
     {
         if (span.UninstrumentedPeer != null)
@@ -168,4 +229,6 @@ public sealed class SpanWaterfallViewModel
         // Fallback to the peer address.
         return OtlpHelpers.GetPeerAddress(span.Attributes);
     }
+
+    private sealed record TraceDetailChild(DateTime Timestamp, long SortKey, SpanWaterfallViewModel? SpanViewModel, LogSummary? LogEntry);
 }

@@ -117,46 +117,39 @@
                                                     Class="main-grid trace-view-grid enable-row-click"
                                                     ResizableColumns="true"
                                                     ItemsProvider="@GetData"
-                                                    TGridItem="SpanWaterfallViewModel"
+                                                    TGridItem="TraceDetailRowViewModel"
                                                     RowClass="@GetRowClass"
                                                     ColumnOrder="@_manager.ColumnOrder"
                                                     GridTemplateColumns="@_manager.GetGridTemplateColumns()"
                                                     RowSize="DataGridRowSize.Small"
                                                     OverscanCount="50"
                                                     ShowHover="true"
-                                                    ItemKey="@(r => r.Span.SpanId)"
-                                                    OnRowClick="@(r => r.ExecuteOnDefault(d => OnShowPropertiesAsync(d, focusElementId: ScrollContainerId)))">
+                                                    ItemKey="@(r => r.Key)"
+                                                    OnRowClick="@(r => r.ExecuteOnDefault(d => d.SpanViewModel is { } spanViewModel
+                                                        ? OnShowPropertiesAsync(spanViewModel, focusElementId: ScrollContainerId)
+                                                        : ToggleSpanLogsAsync(d.LogEntry!)))">
                                     <ChildContent>
-                                        <AspireTemplateColumn ColumnId="@NameColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.TraceDetail.TraceDetailNameHeader)]" Tooltip="true" TooltipText="@(c => c.GetTooltip(_resources))" Class="expand-col">
-                                            @{
-                                                var isServerOrConsumer = context.Span.Kind == OtlpSpanKind.Server || context.Span.Kind == OtlpSpanKind.Consumer;
-                                                // Indent the span name based on the depth of the span.
-                                                var marginLeft = (context.Depth - 1) * 15;
+                                        <AspireTemplateColumn ColumnId="@NameColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.TraceDetail.TraceDetailNameHeader)]" Tooltip="true" TooltipText="@(c => c.SpanViewModel?.GetTooltip(_resources) ?? c.LogEntry?.Message)" Class="expand-col">
+                                            @if (context.SpanViewModel is { } nameSpan)
+                                            {
+                                                var isServerOrConsumer = nameSpan.Span.Kind == OtlpSpanKind.Server || nameSpan.Span.Kind == OtlpSpanKind.Consumer;
+                                                var marginLeft = (nameSpan.Depth - 1) * 15;
 
-                                                // We want to have consistent margin for both client and server spans.
                                                 string spanNameContainerStyle;
                                                 if (!isServerOrConsumer)
                                                 {
-                                                    // Client span has 19px extra content:
-                                                    // - 5px extra margin-left
-                                                    // - 5px border
-                                                    // - 9px padding-left
-                                                    spanNameContainerStyle = $"margin-left: 5px; border-left-color: {ColorGenerator.Instance.GetColorVariableByKey(GetResourceName(context.Span.Source))}; border-left-width: 5px; border-left-style: solid; padding-left: 9px;";
+                                                    spanNameContainerStyle = $"margin-left: 5px; border-left-color: {ColorGenerator.Instance.GetColorVariableByKey(GetResourceName(nameSpan.Span.Source))}; border-left-width: 5px; border-left-style: solid; padding-left: 9px;";
                                                 }
                                                 else
                                                 {
-                                                    // Span with icon has 19px extra content:
-                                                    // - 16px icon
-                                                    // - 3px padding-left
                                                     spanNameContainerStyle = string.Empty;
                                                 }
-                                            }
 
                                             <div class="span-overview-container">
-                                                <span @onclick:stopPropagation="true" style="margin-left: @(marginLeft)px;" class="main-grid-expand-container @(context.IsCollapsed ? "main-grid-collapsed" : "main-grid-expanded")">
-                                                    @if (context.Children.Count > 0)
+                                                <span @onclick:stopPropagation="true" style="margin-left: @(marginLeft)px;" class="main-grid-expand-container @(nameSpan.IsCollapsed ? "main-grid-collapsed" : "main-grid-expanded")">
+                                                    @if (nameSpan.Children.Count > 0)
                                                     {
-                                                        <FluentButton aria-label="@ControlStringsLoc[nameof(ControlsStrings.ToggleNesting)]" Appearance="ButtonAppearance.Transparent" Class="main-grid-expand-button" OnClick="@(() => OnToggleCollapse(context))">
+                                                        <FluentButton aria-label="@ControlStringsLoc[nameof(ControlsStrings.ToggleNesting)]" Appearance="ButtonAppearance.Transparent" Class="main-grid-expand-button" OnClick="@(() => OnToggleCollapse(nameSpan))">
                                                             <FluentIcon Icon="Icons.Regular.Size12.ChevronRight" Color="Color.Default" />
                                                         </FluentButton>
                                                     }
@@ -166,61 +159,76 @@
                                                     {
                                                         <FluentIcon Class="span-kind-icon"
                                                                     Color="Color.Custom"
-                                                                    CustomColor="@ColorGenerator.Instance.GetColorVariableByKey(GetResourceName(context.Span.Source))"
-                                                                    Value="@TraceHelpers.TryGetSpanIcon(context.Span, IconVariant.Filled)"/>
+                                                                    CustomColor="@ColorGenerator.Instance.GetColorVariableByKey(GetResourceName(nameSpan.Span.Source))"
+                                                                    Value="@TraceHelpers.TryGetSpanIcon(nameSpan.Span, IconVariant.Filled)"/>
                                                     }
 
-                                                    @if (context.IsError)
+                                                    @if (nameSpan.IsError)
                                                     {
                                                         <FluentIcon Icon="Icons.Filled.Size12.ErrorCircle" Color="Color.Error" Class="trace-tag-icon"/>
                                                     }
-                                                    <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@context.Span.GetDisplaySummary()" />
-                                                    @if (context.HasUninstrumentedPeer)
+                                                    <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@nameSpan.Span.GetDisplaySummary()" />
+                                                    @if (nameSpan.HasUninstrumentedPeer)
                                                     {
                                                         <span class="uninstrumented-peer">
                                                             @{
                                                                 Icon icon;
-                                                                if (context.Span.Attributes.HasKey("db.system"))
+                                                                if (nameSpan.Span.Attributes.HasKey("db.system"))
                                                                 {
                                                                     icon = new Icons.Filled.Size16.Database();
                                                                 }
-                                                                else if (context.Span.Attributes.HasKey("messaging.system"))
+                                                                else if (nameSpan.Span.Attributes.HasKey("messaging.system"))
                                                                 {
                                                                     icon = new Icons.Filled.Size16.Mail();
                                                                 }
                                                                 else
                                                                 {
-                                                                    // Everything else.
                                                                     icon = new Icons.Filled.Size16.ArrowCircleRight();
                                                                 }
                                                             }
                                                             <FluentIcon
                                                                 Value="icon"
                                                                 Color="Color.Custom"
-                                                                CustomColor="@ColorGenerator.Instance.GetColorVariableByKey(context.UninstrumentedPeer)"
+                                                                CustomColor="@ColorGenerator.Instance.GetColorVariableByKey(nameSpan.UninstrumentedPeer)"
                                                                 Class="uninstrumented-peer-icon"/>
-                                                            <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@context.UninstrumentedPeer" />
+                                                            <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@nameSpan.UninstrumentedPeer" />
                                                         </span>
                                                     }
                                                 </span>
                                                 <span @onclick:stopPropagation="true">
-                                                    @if (IsGenAISpan(context))
+                                                    @if (IsGenAISpan(nameSpan))
                                                     {
                                                         <FluentButton Appearance="ButtonAppearance.Transparent"
                                                                     IconOnly="true"
                                                                     Title="@ControlStringsLoc[nameof(ControlsStrings.GenAIDetailsTitle)]"
                                                                     Class="genai-details-button"
-                                                                    OnClick="() => OnGenAIClickedAsync(context.Span)">
+                                                                    OnClick="() => OnGenAIClickedAsync(nameSpan.Span)">
                                                             <FluentIcon Icon="Icons.Regular.Size20.Sparkle"
                                                                         Color="Color.Primary" />
                                                         </FluentButton>
                                                     }
                                                 </span>
                                             </div>
+                                            }
+                                            else if (context.LogEntry is { } nameLog)
+                                            {
+                                                <div class="trace-log-overview" style="margin-left: @(Math.Max(0, context.Depth - 1) * 15)px;">
+                                                    <LogLevelColumnDisplay LogEntry="@nameLog" />
+                                                    <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@(nameLog.EventName ?? string.Empty)" />
+                                                    <span class="trace-log-message">@nameLog.Message</span>
+                                                </div>
+                                            }
                                         </AspireTemplateColumn>
-                                        <AspireTemplateColumn ColumnId="@ResourceColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.TraceDetail.TraceDetailResourceHeader)]" Tooltip="true" TooltipText="@(c => GetResourceName(c.Span.Source))" Class="expand-col">
+                                        <AspireTemplateColumn ColumnId="@ResourceColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.TraceDetail.TraceDetailResourceHeader)]" Tooltip="true" TooltipText="@(c => c.SpanViewModel is { } spanVm ? GetResourceName(spanVm.Span.Source) : c.LogEntry is { } logEntry ? OtlpHelpers.GetResourceName(logEntry.Resource, _resources) : null)" Class="expand-col">
                                             <div class="resource-name">
-                                                <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@GetResourceName(context.Span.Source)" />
+                                                @if (context.SpanViewModel is { } resourceSpan)
+                                                {
+                                                    <FluentHighlighter HighlightedText="@PageViewModel.Filter" Text="@GetResourceName(resourceSpan.Span.Source)" />
+                                                }
+                                                else if (context.LogEntry is { } resourceLog)
+                                                {
+                                                    @OtlpHelpers.GetResourceName(resourceLog.Resource, _resources)
+                                                }
                                             </div>
                                         </AspireTemplateColumn>
                                         <AspireTemplateColumn ColumnId="@TicksColumn" ColumnManager="@_manager">
@@ -248,64 +256,24 @@
                                                 </div>
                                             </HeaderCellItemTemplate>
                                             <ChildContent>
-                                                @{
-                                                    var spanColor = @ColorGenerator.Instance.GetColorVariableByKey(GetResourceName(context.Span.Source));
-                                                }
                                                 <div class="ticks">
-                                                    <div class="span-container" style="position: relative; grid-template-columns: @context.LeftOffset.ToString("F2", CultureInfo.InvariantCulture)% @context.Width.ToString("F2", CultureInfo.InvariantCulture)% min-content;">
-                                                        <div class="span-button-container">
-                                                            @foreach (var item in context.SpanLogs)
-                                                            {
-                                                                var buttonId = $"{context.Span.SpanId}-{item.LogEntry.InternalId}";
-                                                                var eventName = item.LogEntry.EventName ?? StructuredLogsLoc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsEntryDetails)];
-                                                                var isSelected = SelectedData?.LogEntryViewModel?.LogEntry.InternalId == item.LogEntry.InternalId;
-                                                                var htmlTooltip = item.Index < 500;
-                                                                var buttonColor = item.LogEntry.IsError ? "var(--error)" : spanColor;
-
-                                                                <button id="@buttonId"
-                                                                        title="@(!htmlTooltip ? $"{eventName} - {item.LogEntry.ScopeName}" : string.Empty)"
-                                                                        aria-label="@StructuredLogsLoc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsEntryDetails)]"
-                                                                        class="@($"span-log-entry-button {(isSelected ? "span-log-entry-selected" : null)} {(item.LogEntry.IsError ? "span-log-entry-error" : null)}")"
-                                                                        data-span-color="@spanColor"
-                                                                        style="@($"left: {@item.LeftOffset.ToString("F2", CultureInfo.InvariantCulture)}%; --button-color: {buttonColor};")"
-                                                                        @onclick="@(() => ToggleSpanLogsAsync(item.LogEntry))"
-                                                                        @onclick:stopPropagation="true">
-                                                                </button>
-                                                                @*
-                                                                    There is a performance impact to having many tooltips on the page. Limit to 500 tooltips.
-                                                                    The button continues to be displayed and clicking on it opens the details view.
-                                                                    A standard browser tooltip is displayed instead of the FluentTooltip.
-                                                                *@
-                                                                @if (htmlTooltip)
-                                                                {
-                                                                    <FluentTooltip Anchor="@buttonId" MaxWidth="350px" Style="flex-direction: column;">
-                                                                        <div class="log-tooltip-title-container">
-                                                                            <span class="log-tooltip-title">@eventName</span> <span class="log-tooltip-subtitle">@item.LogEntry.ScopeName</span><br />
-                                                                        </div>
-                                                                        <table class="log-tooltip-table">
-                                                                            <tr>
-                                                                                <td class="label-column">@StructuredLogsLoc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsLevelColumnHeader)]</td>
-                                                                                <td>@item.LogEntry.Severity</td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td class="label-column">@StructuredLogsLoc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsTimestampColumnHeader)]</td>
-                                                                                <td>@FormatHelpers.FormatTimeWithOptionalDate(TimeProvider, item.LogEntry.TimeStamp, MillisecondsDisplay.Truncated)</td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td class="label-column">@StructuredLogsLoc[nameof(Dashboard.Resources.StructuredLogs.StructuredLogsMessageColumnHeader)]</td>
-                                                                                <td>@FormatHelpers.TruncateText(item.LogEntry.Message, maxLength: 150)</td>
-                                                                            </tr>
-                                                                        </table>
-                                                                    </FluentTooltip>
-                                                                }
-                                                            }
+                                                    @if (context.SpanViewModel is { } tickSpan)
+                                                    {
+                                                        var spanColor = ColorGenerator.Instance.GetColorVariableByKey(GetResourceName(tickSpan.Span.Source));
+                                                        <div class="span-container" style="position: relative; grid-template-columns: @tickSpan.LeftOffset.ToString("F2", CultureInfo.InvariantCulture)% @tickSpan.Width.ToString("F2", CultureInfo.InvariantCulture)% min-content;">
+                                                            <div class="span-bar" style="grid-column: 2; background: @spanColor;"></div>
+                                                            <div class="span-bar-label @(tickSpan.LabelIsRight ? "span-bar-label-right" : "span-bar-label-left")">
+                                                                <span class="span-bar-label-detail">@SpanWaterfallViewModel.GetTitle(tickSpan.Span, _resources)</span>
+                                                                <span>@DurationFormatter.FormatDuration(tickSpan.Span.Duration, CultureInfo.CurrentCulture)</span>
+                                                            </div>
                                                         </div>
-                                                        <div class="span-bar" style="grid-column: 2; background: @spanColor;"></div>
-                                                        <div class="span-bar-label @(context.LabelIsRight ? "span-bar-label-right" : "span-bar-label-left")">
-                                                            <span class="span-bar-label-detail">@SpanWaterfallViewModel.GetTitle(context.Span, _resources)</span>
-                                                            <span>@DurationFormatter.FormatDuration(context.Span.Duration, CultureInfo.CurrentCulture)</span>
+                                                    }
+                                                    else if (context.LogEntry is { } tickLog)
+                                                    {
+                                                        <div class="trace-log-timestamp-container">
+                                                            <div class="trace-log-timestamp @(tickLog.IsError ? "trace-log-timestamp-error" : null)" style="left: @GetLogLeftOffset(tickLog).ToString("F2", CultureInfo.InvariantCulture)%;" title="@FormatHelpers.FormatDateTime(TimeProvider, tickLog.TimeStamp, MillisecondsDisplay.Full, CultureInfo.CurrentCulture)"></div>
                                                         </div>
-                                                    </div>
+                                                    }
                                                     <div class="tick" style="grid-column: 1;"></div>
                                                     <div class="tick" style="grid-column: 2;"></div>
                                                     <div class="tick" style="grid-column: 3;"></div>
@@ -315,14 +283,18 @@
                                             </ChildContent>
                                         </AspireTemplateColumn>
                                         <AspireTemplateColumn ColumnId="@ActionsColumn" ColumnManager="@_manager" Title="@ControlStringsLoc[nameof(ControlsStrings.ActionsColumnHeader)]" Class="no-ellipsis">
-                                            @{
-                                                var id = context.Span.SpanId;
-                                            }
-
                                             <div class="grid-action-container" @onclick:stopPropagation="true">
-                                                <SpanActions SpanViewModel="@context"
-                                                            OnViewDetails="@((focusElementId) => OnShowPropertiesAsync(context, focusElementId))"
-                                                            OnLaunchGenAI="@OnGenAIClickedAsync" />
+                                                @if (context.SpanViewModel is { } actionSpan)
+                                                {
+                                                    <SpanActions SpanViewModel="@actionSpan"
+                                                                OnViewDetails="@((focusElementId) => OnShowPropertiesAsync(actionSpan, focusElementId))"
+                                                                OnLaunchGenAI="@OnGenAIClickedAsync" />
+                                                }
+                                                else if (context.LogEntry is { } actionLog)
+                                                {
+                                                    <StructuredLogActions LogEntry="@actionLog"
+                                                                          OnViewDetails="@((focusElementId) => ToggleSpanLogsAsync(actionLog))" />
+                                                }
                                             </div>
                                         </AspireTemplateColumn>
                                     </ChildContent>

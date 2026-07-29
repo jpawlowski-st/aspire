@@ -74,6 +74,58 @@ public sealed class SpanWaterfallViewModelTests
     }
 
     [Fact]
+    public void CreateDisplayRows_InterleavesSpanAndTraceLogsByTimestamp()
+    {
+        var context = new OtlpContext { Logger = NullLogger.Instance, Options = new() };
+        var resource = new OtlpResource("app1", "instance", uninstrumentedPeer: false, context);
+        var trace = new OtlpTrace(new byte[] { 1, 2, 3 }, DateTime.MinValue);
+        var scope = TelemetryTestHelpers.CreateOtlpScope(context);
+        var start = new DateTime(2001, 1, 1, 1, 1, 2, DateTimeKind.Utc);
+        var root = TelemetryTestHelpers.CreateOtlpSpan(resource, trace, scope, spanId: "726F6F74", parentSpanId: null, startDate: start, endDate: start.AddSeconds(10));
+        var child = TelemetryTestHelpers.CreateOtlpSpan(resource, trace, scope, spanId: "6368696C64", parentSpanId: "726F6F74", startDate: start.AddSeconds(4), endDate: start.AddSeconds(5));
+        trace.AddSpan(root);
+        trace.AddSpan(child);
+
+        var spanLog = new LogSummary
+        {
+            InternalId = 1,
+            TimeStamp = start.AddSeconds(2),
+            Severity = LogLevel.Information,
+            Message = "span log",
+            SpanId = "726F6F74",
+            TraceId = trace.TraceId,
+            ScopeName = scope.Name,
+            Resource = resource,
+            ExceptionText = null,
+            HasGenAI = false
+        };
+        var traceLog = new LogSummary
+        {
+            InternalId = 2,
+            TimeStamp = start.AddSeconds(3),
+            Severity = LogLevel.Information,
+            Message = "trace log",
+            SpanId = "missing",
+            TraceId = trace.TraceId,
+            ScopeName = scope.Name,
+            Resource = resource,
+            ExceptionText = null,
+            HasGenAI = false
+        };
+        var spans = SpanWaterfallViewModel.Create(trace, [spanLog, traceLog], new SpanWaterfallViewModel.TraceDetailState([], []));
+
+        var rows = SpanWaterfallViewModel.CreateDisplayRows(spans, spans, [spanLog, traceLog]);
+
+        Assert.Collection(rows,
+            row => Assert.Equal("726F6F74", row.SpanViewModel!.Span.SpanId),
+            row => Assert.Equal("span log", row.LogEntry!.Message),
+            row => Assert.Equal("6368696C64", row.SpanViewModel!.Span.SpanId),
+            row => Assert.Equal("trace log", row.LogEntry!.Message));
+        Assert.Equal(1, rows[1].Depth);
+        Assert.Equal(0, rows[3].Depth);
+    }
+
+    [Fact]
     public void Create_OutgoingPeers_UsesPeerAddressWhenPeerIsNotPersisted()
     {
         var context = new OtlpContext { Logger = NullLogger.Instance, Options = new() };

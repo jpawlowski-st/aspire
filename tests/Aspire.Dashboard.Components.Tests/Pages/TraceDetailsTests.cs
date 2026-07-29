@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Testing;
 using Microsoft.FluentUI.AspNetCore.Components;
+using OpenTelemetry.Proto.Logs.V1;
 using OpenTelemetry.Proto.Trace.V1;
 using Xunit;
 using static Aspire.Tests.Shared.Telemetry.TelemetryTestHelpers;
@@ -254,7 +255,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         logger.LogInformation($"Assert row count for '{traceId}'");
         await AsyncTestHelpers.AssertIsTrueRetryAsync(() =>
         {
-            var grid = cut.FindComponent<FluentDataGrid<SpanWaterfallViewModel>>();
+            var grid = cut.FindComponent<FluentDataGrid<TraceDetailRowViewModel>>();
             var rows = grid.FindAll(".fluent-data-grid-row");
             return rows.Count == 3;
         }, "Expected rows to be rendered.", logger);
@@ -268,7 +269,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         logger.LogInformation($"Assert row count for '{traceId}'");
         await AsyncTestHelpers.AssertIsTrueRetryAsync(() =>
         {
-            var grid = cut.FindComponent<FluentDataGrid<SpanWaterfallViewModel>>();
+            var grid = cut.FindComponent<FluentDataGrid<TraceDetailRowViewModel>>();
             var rows = grid.FindAll(".fluent-data-grid-row");
             return rows.Count == 2;
         }, "Expected rows to be rendered.", logger);
@@ -322,7 +323,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         logger.LogInformation($"Assert row count for '{traceId}'");
         await AsyncTestHelpers.AssertIsTrueRetryAsync(() =>
         {
-            var grid = cut.FindComponent<FluentDataGrid<SpanWaterfallViewModel>>();
+            var grid = cut.FindComponent<FluentDataGrid<TraceDetailRowViewModel>>();
             var rows = grid.FindAll(".fluent-data-grid-row");
             return rows.Count == 3;
         }, "Expected rows to be rendered.", logger);
@@ -349,7 +350,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         logger.LogInformation($"Assert updated row count for '{traceId}'");
         await AsyncTestHelpers.AssertIsTrueRetryAsync(() =>
         {
-            var grid = cut.FindComponent<FluentDataGrid<SpanWaterfallViewModel>>();
+            var grid = cut.FindComponent<FluentDataGrid<TraceDetailRowViewModel>>();
             var rows = grid.FindAll(".fluent-data-grid-row");
             return rows.Count == 4;
         }, "Expected rows to be rendered.", logger);
@@ -404,7 +405,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         logger.LogInformation($"Assert row count for '{traceId}'");
         await AsyncTestHelpers.AssertIsTrueRetryAsync(() =>
         {
-            var grid = cut.FindComponent<FluentDataGrid<SpanWaterfallViewModel>>();
+            var grid = cut.FindComponent<FluentDataGrid<TraceDetailRowViewModel>>();
             var rows = grid.FindAll(".fluent-data-grid-row");
             return rows.Count == 3;
         }, "Expected rows to be rendered.", logger);
@@ -495,15 +496,86 @@ public partial class TraceDetailsTests : DashboardTestContext
         });
 
         cut.WaitForAssertion(() => Assert.NotNull(cut.Instance.PageViewModel.SpanWaterfallViewModels));
-        var data = await cut.Instance.GetData(new GridItemsProviderRequest<SpanWaterfallViewModel>());
+        var data = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
 
         // Assert
         Assert.Collection(data.Items,
-            item => Assert.Equal("Test span. Id: 1-1", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 2-1", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 3-1", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 3-2", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 3-3", item.Span.Name));
+            item => Assert.Equal("Test span. Id: 1-1", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 2-1", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 3-1", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 3-2", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 3-3", item.SpanViewModel!.Span.Name));
+    }
+
+    [Fact]
+    public async Task Render_LogsAreNestedUnderSpansAndTraceLevelLogsAreTimestampOrdered()
+    {
+        // Arrange
+        SetupTraceDetailsServices();
+
+        var viewport = new ViewportInformation(IsDesktop: true, IsUltraLowHeight: false, IsUltraLowWidth: false);
+        Services.GetRequiredService<DimensionManager>().InvokeOnViewportInformationChanged(viewport);
+
+        var telemetryRepository = Services.GetRequiredService<TelemetryRepository>();
+        telemetryRepository.AddTraces(new AddContext(), new RepeatedField<ResourceSpans>
+        {
+            new ResourceSpans
+            {
+                Resource = CreateResource(),
+                ScopeSpans =
+                {
+                    new ScopeSpans
+                    {
+                        Scope = CreateScope(),
+                        Spans =
+                        {
+                            CreateSpan(traceId: "1", spanId: "726F6F74", startTime: s_testTime, endTime: s_testTime.AddSeconds(10)),
+                            CreateSpan(traceId: "1", spanId: "6368696C64", startTime: s_testTime.AddSeconds(4), endTime: s_testTime.AddSeconds(5), parentSpanId: "726F6F74")
+                        }
+                    }
+                }
+            }
+        });
+        telemetryRepository.AddLogs(new AddContext(), new RepeatedField<ResourceLogs>
+        {
+            new ResourceLogs
+            {
+                Resource = CreateResource(),
+                ScopeLogs =
+                {
+                    new ScopeLogs
+                    {
+                        Scope = CreateScope(),
+                        LogRecords =
+                        {
+                            CreateLogRecord(time: s_testTime.AddSeconds(2), traceId: "1", spanId: "726F6F74", message: "span log"),
+                            CreateLogRecord(time: s_testTime.AddSeconds(3), traceId: "1", spanId: "missing", message: "trace log")
+                        }
+                    }
+                }
+            }
+        });
+
+        // Act
+        var traceId = Convert.ToHexString(Encoding.UTF8.GetBytes("1"));
+        var cut = RenderComponent<TraceDetail>(builder =>
+        {
+            builder.Add(p => p.TraceId, traceId);
+            builder.AddCascadingValue(viewport);
+        });
+
+        var data = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
+
+        // Assert
+        Assert.Collection(data.Items,
+            row => Assert.Equal("Test span. Id: 726F6F74", row.SpanViewModel!.Span.Name),
+            row => Assert.Equal("span log", row.LogEntry!.Message),
+            row => Assert.Equal("Test span. Id: 6368696C64", row.SpanViewModel!.Span.Name),
+            row => Assert.Equal("trace log", row.LogEntry!.Message));
+        Assert.Equal(1, data.Items.ElementAt(1).Depth);
+        Assert.Equal(0, data.Items.ElementAt(3).Depth);
+
+        cut.WaitForAssertion(() => Assert.Equal(2, cut.FindAll(".trace-log-overview").Count));
     }
 
     [Fact]
@@ -591,7 +663,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         });
 
         cut.WaitForAssertion(() => Assert.NotNull(cut.Instance.PageViewModel.SpanWaterfallViewModels));
-        var unfilteredData = await cut.Instance.GetData(new GridItemsProviderRequest<SpanWaterfallViewModel>());
+        var unfilteredData = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
 
         // Duration >= 10ms only matches 1-3. Its parent chain (1-1, 1-2) stays visible
         // as ancestors so the matching span remains navigable in the waterfall, even
@@ -608,7 +680,7 @@ public partial class TraceDetailsTests : DashboardTestContext
                 }
             ]);
         var filteredItems = TraceDetail.TraceDetailPageViewModel.ApplySpanFilters(
-            unfilteredData.Items.ToList(),
+            unfilteredData.Items.Select(item => item.SpanViewModel!).ToList(),
             contextFilterMatches: null,
             durationMatches).ToList();
 
@@ -635,7 +707,7 @@ public partial class TraceDetailsTests : DashboardTestContext
                 }
             ]);
         var rootMatchFilteredItems = TraceDetail.TraceDetailPageViewModel.ApplySpanFilters(
-            unfilteredData.Items.ToList(),
+            unfilteredData.Items.Select(item => item.SpanViewModel!).ToList(),
             contextFilterMatches: null,
             durationMatches).ToList();
 
@@ -646,11 +718,11 @@ public partial class TraceDetailsTests : DashboardTestContext
             item => Assert.Equal("Test span. Id: 1-5", item.Span.Name));
 
         Assert.Collection(unfilteredData.Items,
-            item => Assert.Equal("Test span. Id: 1-1", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 1-2", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 1-3", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 1-4", item.Span.Name),
-            item => Assert.Equal("Test span. Id: 1-5", item.Span.Name));
+            item => Assert.Equal("Test span. Id: 1-1", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 1-2", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 1-3", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 1-4", item.SpanViewModel!.Span.Name),
+            item => Assert.Equal("Test span. Id: 1-5", item.SpanViewModel!.Span.Name));
     }
 
     [Fact]
@@ -718,7 +790,7 @@ public partial class TraceDetailsTests : DashboardTestContext
         });
 
         cut.WaitForAssertion(() => Assert.NotNull(cut.Instance.PageViewModel.SpanWaterfallViewModels));
-        var unfilteredData = await cut.Instance.GetData(new GridItemsProviderRequest<SpanWaterfallViewModel>());
+        var unfilteredData = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
 
         var durationMatches = await GetMatchingSpanIdsAsync(
             telemetryRepository,
@@ -732,7 +804,7 @@ public partial class TraceDetailsTests : DashboardTestContext
                 }
             ]);
         var filteredItems = TraceDetail.TraceDetailPageViewModel.ApplySpanFilters(
-            unfilteredData.Items.ToList(),
+            unfilteredData.Items.Select(item => item.SpanViewModel!).ToList(),
             contextFilterMatches: null,
             durationMatches).ToList();
 

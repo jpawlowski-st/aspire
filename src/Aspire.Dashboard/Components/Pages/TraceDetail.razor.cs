@@ -37,13 +37,15 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
     private OtlpTrace? _trace;
     private long _detailViewUpdateVersion;
     private Subscription? _tracesSubscription;
+    private Subscription? _logsSubscription;
+    private List<LogSummary> _traceLogs = [];
     private int _maxDepth;
     private int _resourceCount;
     private List<OtlpResource> _resources = default!;
     private readonly List<string> _collapsedSpanIds = [];
     private string? _elementIdBeforeDetailsViewOpened;
     private string? _pendingFocusElementId;
-    private AspireFluentDataGrid<SpanWaterfallViewModel> _dataGrid = null!;
+    private AspireFluentDataGrid<TraceDetailRowViewModel> _dataGrid = null!;
     private GridColumnManager _manager = null!;
     private IList<GridColumn> _gridColumns = null!;
     private readonly List<MenuButtonItem> _traceActionsMenuItems = [];
@@ -153,9 +155,9 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
     }
 
     // Internal to be used in unit tests
-    internal ValueTask<GridItemsProviderResult<SpanWaterfallViewModel>> GetData(GridItemsProviderRequest<SpanWaterfallViewModel> request)
+    internal ValueTask<GridItemsProviderResult<TraceDetailRowViewModel>> GetData(GridItemsProviderRequest<TraceDetailRowViewModel> request)
     {
-        var visibleItems = GetVisibleSpanViewModels().ToList();
+        var visibleItems = GetVisibleTraceDetailRows();
         var totalItemCount = visibleItems.Count;
         var startIndex = Math.Min(request.StartIndex, visibleItems.Count);
         var count = Math.Min(request.Count ?? DashboardUIHelpers.DefaultDataGridResultCount, visibleItems.Count - startIndex);
@@ -163,7 +165,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
             ? visibleItems.GetRange(startIndex, count)
             : [];
 
-        return ValueTask.FromResult(new GridItemsProviderResult<SpanWaterfallViewModel>
+        return ValueTask.FromResult(new GridItemsProviderResult<TraceDetailRowViewModel>
         {
             Items = page,
             TotalItemCount = totalItemCount
@@ -178,6 +180,16 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
         }
 
         return TraceDetailPageViewModel.ApplySpanFilters(PageViewModel.SpanWaterfallViewModels, PageViewModel.ContextFilterMatches, PageViewModel.DurationFilterMatches);
+    }
+
+    private List<TraceDetailRowViewModel> GetVisibleTraceDetailRows()
+    {
+        Debug.Assert(PageViewModel.SpanWaterfallViewModels is not null);
+
+        return SpanWaterfallViewModel.CreateDisplayRows(
+            PageViewModel.SpanWaterfallViewModels,
+            GetVisibleSpanViewModels(),
+            _traceLogs);
     }
 
     internal string? GetPageTitle()
@@ -290,6 +302,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
             PageViewModel.SpanWaterfallViewModels = null;
             PageViewModel.ContextFilterMatches = null;
             PageViewModel.DurationFilterMatches = null;
+            _traceLogs = [];
             _maxDepth = 0;
             _resourceCount = 0;
             UpdateTraceActionsMenu();
@@ -322,6 +335,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
 
         _trace = trace;
         _resources = resources;
+        _traceLogs = result;
         Logger.LogInformation("Trace '{TraceId}' has {SpanCount} spans.", trace.TraceId, trace.Spans.Count);
         PageViewModel.SpanWaterfallViewModels = SpanWaterfallViewModel.Create(trace, result, new SpanWaterfallViewModel.TraceDetailState(_collapsedSpanIds, resources));
         await UpdateFilterMatchesAsync();
@@ -360,6 +374,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
         if (_trace == null)
         {
             _tracesSubscription?.Dispose();
+            _logsSubscription?.Dispose();
             return;
         }
 
@@ -386,16 +401,37 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
                 }
             }));
         }
+
+        if (_logsSubscription is null)
+        {
+            _logsSubscription = TelemetryRepository.OnNewLogs(resourceKey: null, SubscriptionType.Read, () => InvokeAsync(async () =>
+            {
+                if (_trace is null)
+                {
+                    return;
+                }
+
+                // Logs can arrive after their trace stops. Refresh the trace-scoped query even
+                // when the span collection is unchanged so late logs become visible immediately.
+                await UpdateDetailViewDataAsync();
+                StateHasChanged();
+                await _dataGrid.SafeRefreshDataAsync();
+            }));
+        }
     }
 
-    private string GetRowClass(SpanWaterfallViewModel viewModel)
+    private string GetRowClass(TraceDetailRowViewModel viewModel)
     {
         // Test with id rather than the object reference because the data and view model objects are recreated on trace updates.
-        if (PageViewModel.SelectedData?.SpanViewModel is { } selectedSpan && selectedSpan.Span.SpanId == viewModel.Span.SpanId)
+        if (viewModel.SpanViewModel is { } spanViewModel &&
+            PageViewModel.SelectedData?.SpanViewModel is { } selectedSpan &&
+            selectedSpan.Span.SpanId == spanViewModel.Span.SpanId)
         {
             return "selected-row";
         }
-        else if (PageViewModel.SelectedData?.LogEntryViewModel is { } selectedLog && viewModel.SpanLogs.Any(l => l.LogEntry.InternalId == selectedLog.LogEntry.InternalId))
+        else if (viewModel.LogEntry is { } logEntry &&
+            PageViewModel.SelectedData?.LogEntryViewModel is { } selectedLog &&
+            logEntry.InternalId == selectedLog.LogEntry.InternalId)
         {
             return "selected-row";
         }
@@ -530,6 +566,16 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
     }
 
     private string GetResourceName(OtlpResourceView app) => OtlpResource.GetResourceName(app, _resources);
+
+    private double GetLogLeftOffset(LogSummary logEntry)
+    {
+        Debug.Assert(_trace is not null);
+
+        var duration = _trace.Duration.TotalMilliseconds;
+        return duration == 0
+            ? 0
+            : (logEntry.TimeStamp - _trace.FirstSpan.StartTime).TotalMilliseconds / duration * 100;
+    }
 
     private async Task ToggleSpanLogsAsync(LogSummary logEntry)
     {
@@ -699,7 +745,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
             return;
         }
 
-        if (PageViewModel.IsSelectedDataExcludedByFilters(GetVisibleSpanViewModels()))
+        if (PageViewModel.IsSelectedDataExcludedByFilters(GetVisibleTraceDetailRows()))
         {
             PageViewModel.SelectedData = null;
         }
@@ -754,6 +800,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
         Interlocked.Increment(ref _detailViewUpdateVersion);
         _cts.Cancel();
         _tracesSubscription?.Dispose();
+        _logsSubscription?.Dispose();
         TelemetryContext.Dispose();
     }
 
@@ -773,7 +820,7 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
         /// <summary>
         /// Returns true when the selected span or log entry is not present in the visible span set.
         /// </summary>
-        public bool IsSelectedDataExcludedByFilters(IEnumerable<SpanWaterfallViewModel> visibleSpans)
+        public bool IsSelectedDataExcludedByFilters(IEnumerable<TraceDetailRowViewModel> visibleRows)
         {
             if (SelectedData is null)
             {
@@ -782,15 +829,22 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
 
             if (SelectedData.SpanViewModel is { } spanVm)
             {
-                return !visibleSpans.Any(vm => vm.Span.SpanId == spanVm.Span.SpanId);
+                return !visibleRows.Any(row => row.SpanViewModel?.Span.SpanId == spanVm.Span.SpanId);
             }
 
             if (SelectedData.LogEntryViewModel is { } logVm)
             {
-                return !visibleSpans.Any(vm => vm.SpanLogs.Any(l => l.LogEntry.InternalId == logVm.LogEntry.InternalId));
+                return !visibleRows.Any(row => row.LogEntry?.InternalId == logVm.LogEntry.InternalId);
             }
 
             return false;
+        }
+
+        internal bool IsSelectedDataExcludedByFilters(IEnumerable<SpanWaterfallViewModel> visibleSpans)
+        {
+            return IsSelectedDataExcludedByFilters(visibleSpans.SelectMany(span =>
+                new[] { TraceDetailRowViewModel.CreateSpan(span) }
+                    .Concat(span.SpanLogs.Select(log => TraceDetailRowViewModel.CreateLog(log.LogEntry, span.Depth)))));
         }
 
         internal static IEnumerable<SpanWaterfallViewModel> ApplySpanFilters(

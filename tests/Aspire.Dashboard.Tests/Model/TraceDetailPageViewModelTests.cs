@@ -25,7 +25,7 @@ public sealed class TraceDetailPageViewModelTests
             SelectedSpanType = new SelectViewModel<SpanType> { Name = "All", Id = default }
         };
 
-        var result = vm.IsSelectedDataExcludedByFilters([]);
+        var result = vm.IsSelectedDataExcludedByFilters(Array.Empty<SpanWaterfallViewModel>());
 
         Assert.False(result);
     }
