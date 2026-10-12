@@ -1,10 +1,19 @@
-$framework = "net8.0"
+$config = "Release"
 $targets = @{
     "publish.dashboard" = {
-        dotnet publish src\Aspire.Dashboard\Aspire.Dashboard.csproj -c Debug -r win-x64 --self-contained false -o publish\dashboard\win-x64
+        $out = "publish\dashboard\win-x64"
+        # make sure we don't use any leftover files from previous publishes
+        if (Test-Path $out) {
+            write-host "Removing old publish artifacts..."
+            Remove-Item $out -Recurse -Force
+        }
+
+
+        Write-host "publishing dashoard..."
+        dotnet publish src\Aspire.Dashboard\Aspire.Dashboard.csproj -c $config -r win-x64 --self-contained true -o $out
     }
     "build.dashboard" = {
-        dotnet build src\Aspire.Dashboard\Aspire.Dashboard.csproj -c Debug
+        dotnet build src\Aspire.Dashboard\Aspire.Dashboard.csproj -c $config
     }
     "start.dashboard" = {
         param([switch][bool]$watch = $false)
@@ -19,10 +28,11 @@ $targets = @{
         $env:DASHBOARD__FRONTEND__BROWSERTOKEN = "local-dev-token"
 
         $w = if ($watch) { "watch" } else { "" }
-        dotnet $w run -f $framework --project src\Aspire.Dashboard\Aspire.Dashboard.csproj
+        dotnet $w run --project src\Aspire.Dashboard\Aspire.Dashboard.csproj
     }
     "clean" = {
         rm "artifacts" -Recurse -Force
+        rm "publish" -Recurse -Force
         rm .\src\Aspire.Dashboard\artifacts -Recurse -Force
     }
     "restore" = {
