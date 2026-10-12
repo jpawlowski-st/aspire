@@ -239,3 +239,5 @@ local.settings.json
 diagnostics.log
 .squad/
 tags
+publish/
+.configmap/

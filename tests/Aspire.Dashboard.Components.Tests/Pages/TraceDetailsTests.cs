@@ -438,6 +438,27 @@ public partial class TraceDetailsTests : DashboardTestContext
     }
 
     [Fact]
+    public async Task GetData_BeforeSpanRowsAreLoaded_ReturnsEmptyResult()
+    {
+        // Arrange
+        SetupTraceDetailsServices();
+
+        var viewport = new ViewportInformation(IsDesktop: true, IsUltraLowHeight: false, IsUltraLowWidth: false);
+        var cut = Render<TraceDetail>(builder =>
+        {
+            builder.Add(p => p.TraceId, "missing-trace");
+            builder.AddCascadingValue(viewport);
+        });
+
+        // Act
+        var data = await cut.Instance.GetData(new GridItemsProviderRequest<TraceDetailRowViewModel>());
+
+        // Assert
+        Assert.Empty(data.Items);
+        Assert.Equal(0, data.TotalItemCount);
+    }
+
+    [Fact]
     public async Task Render_SpansOrderedByStartTime_RowsRenderedInCorrectOrder()
     {
         // Arrange

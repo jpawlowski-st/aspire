@@ -196,7 +196,12 @@ public partial class TraceDetail : ComponentBase, IComponentWithTelemetry, IDisp
 
     private List<TraceDetailRowViewModel> GetVisibleTraceDetailRows()
     {
-        Debug.Assert(PageViewModel.SpanWaterfallViewModels is not null);
+        // The trace is published before its log query finishes so the page title can render.
+        // The grid's item provider runs during that intermediate render, while the span rows are still null.
+        if (PageViewModel.SpanWaterfallViewModels is null)
+        {
+            return [];
+        }
 
         var rows = SpanWaterfallViewModel.CreateDisplayRows(
             PageViewModel.SpanWaterfallViewModels,
