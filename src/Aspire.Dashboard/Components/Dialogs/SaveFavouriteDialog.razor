@@ -1,18 +1,12 @@
 @using Aspire.Dashboard.Resources
-@implements IDialogContentComponent<SaveFavouriteDialog.SaveFavouriteDialogViewModel>
 
 @inject IStringLocalizer<ControlsStrings> Loc
 
-<FluentDialogHeader ShowDismiss="true">
-    <FluentLabel Typo="Typography.PaneHeader">
-        @Loc[nameof(ControlsStrings.SaveFavouriteDialogTitle)]
-    </FluentLabel>
-</FluentDialogHeader>
-
 <FluentDialogBody>
     <EditForm EditContext="@_editContext" OnValidSubmit="@SaveAsync">
-        <FluentTextField @ref="_nameField"
+        <FluentTextInput @ref="_nameField"
                          @bind-Value="_name"
+                         Class="aspire-input"
                          Required="true"
                          Maxlength="100"
                          Label="@Loc[nameof(ControlsStrings.SaveFavouriteDialogNameLabel)]"
@@ -21,14 +15,14 @@
                          Style="width: 100%" />
         @* Hidden submit so Enter submits the form. *@
         <button type="submit" style="display:none"></button>
+
+        <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.Right" Style="margin-top: 12px;">
+            <FluentButton Class="aspire-button" Appearance="ButtonAppearance.Default" Type="ButtonType.Button" OnClick="@CancelAsync">
+                @Loc[nameof(ControlsStrings.SaveFavouriteDialogCancelButton)]
+            </FluentButton>
+            <FluentButton Class="aspire-button" Appearance="ButtonAppearance.Primary" Type="ButtonType.Submit" Disabled="@string.IsNullOrWhiteSpace(_name)">
+                @Loc[nameof(ControlsStrings.SaveFavouriteDialogSaveButton)]
+            </FluentButton>
+        </FluentStack>
     </EditForm>
 </FluentDialogBody>
-
-<FluentDialogFooter>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@SaveAsync" Disabled="@string.IsNullOrWhiteSpace(_name)">
-        @Loc[nameof(ControlsStrings.SaveFavouriteDialogSaveButton)]
-    </FluentButton>
-    <FluentButton Appearance="Appearance.Neutral" OnClick="@CancelAsync">
-        @Loc[nameof(ControlsStrings.SaveFavouriteDialogCancelButton)]
-    </FluentButton>
-</FluentDialogFooter>

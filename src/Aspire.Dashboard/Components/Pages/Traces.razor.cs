@@ -333,27 +333,6 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         _ => kind.ToString()
     };
 
-    private static string? GetHttpStatusCode(OtlpTrace trace)
-    {
-        // Prefer the root span (typically the inbound HTTP request), then fall back to any span with an HTTP status code.
-        var rootStatus = trace.RootOrFirstSpan.Attributes.GetValueWithFallback("http.response.status_code", "http.status_code");
-        if (!string.IsNullOrEmpty(rootStatus))
-        {
-            return rootStatus;
-        }
-
-        foreach (var span in trace.Spans)
-        {
-            var statusCode = span.Attributes.GetValueWithFallback("http.response.status_code", "http.status_code");
-            if (!string.IsNullOrEmpty(statusCode))
-            {
-                return statusCode;
-            }
-        }
-
-        return null;
-    }
-
     private string GetSpanStatusLabel(OtlpSpanStatusCode status) => status switch
     {
         OtlpSpanStatusCode.Ok => ControlsStringsLoc[nameof(ControlsStrings.SpanStatusOk)],
@@ -437,7 +416,6 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
         var parameters = new DialogParameters
         {
             Title = ControlsStringsLoc[nameof(ControlsStrings.SaveFavouriteDialogTitle)],
-            TrapFocus = true,
             Modal = true,
             Width = "400px",
             Height = "auto",
@@ -449,7 +427,7 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
 
     private async Task OnSaveFavouriteDialogClosedAsync(DialogResult result, string url, string filterText)
     {
-        if (result.Cancelled || result.Data is not string name || string.IsNullOrWhiteSpace(name))
+        if (result.Cancelled || result.Value is not string name || string.IsNullOrWhiteSpace(name))
         {
             return;
         }
@@ -477,7 +455,6 @@ public partial class Traces : IComponentWithTelemetry, IPageWithSessionAndUrlSta
             _selectedFavourite = null;
             await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, null);
         }
-        StateHasChanged();
     }
 
     private bool HasAnyFilter()

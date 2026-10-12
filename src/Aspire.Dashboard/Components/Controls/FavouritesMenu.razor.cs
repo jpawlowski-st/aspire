@@ -13,7 +13,7 @@ public partial class FavouritesMenu : ComponentBase
     private static readonly Icon s_starFilled = new Icons.Filled.Size20.Star();
     private static readonly Icon s_starRegular = new Icons.Regular.Size20.Star();
 
-    private readonly string _buttonId = Identifier.NewId();
+    private readonly string _buttonId = $"favourites-menu-{Guid.NewGuid():N}";
     private bool _open;
     private bool _hasFavourites;
     private Icon _starIcon = s_starRegular;

@@ -107,6 +107,40 @@ public sealed partial class SqliteTelemetryRepository
                     r.resource_name AS root_resource_name,
                     r.instance_id AS root_instance_id,
                     r.uninstrumented_peer AS root_uninstrumented_peer,
+                    s.kind AS primary_span_kind,
+                    s.status AS primary_span_status,
+                    (
+                        SELECT status_code
+                        FROM (
+                            SELECT
+                                COALESCE(
+                                    (
+                                        SELECT NULLIF(a.attribute_value, '')
+                                        FROM telemetry_span_attributes a
+                                        WHERE a.trace_id = hs.trace_id
+                                          AND a.span_id = hs.span_id
+                                          AND a.attribute_key = 'http.response.status_code'
+                                        LIMIT 1
+                                    ),
+                                    (
+                                        SELECT NULLIF(a.attribute_value, '')
+                                        FROM telemetry_span_attributes a
+                                        WHERE a.trace_id = hs.trace_id
+                                          AND a.span_id = hs.span_id
+                                          AND a.attribute_key = 'http.status_code'
+                                        LIMIT 1
+                                    )
+                                ) AS status_code,
+                                CASE WHEN hs.span_id = pt.primary_span_id THEN 0 ELSE 1 END AS primary_rank,
+                                hs.start_time_ticks,
+                                hs.span_id
+                            FROM telemetry_spans hs
+                            WHERE hs.trace_id = pt.trace_id
+                        )
+                        WHERE status_code IS NOT NULL
+                        ORDER BY primary_rank, start_time_ticks, span_id
+                        LIMIT 1
+                    ) AS http_status_code,
                     pt.has_error,
                     pt.has_gen_ai,
                     pt.first_span_timestamp_ticks AS trace_order_ticks
@@ -126,6 +160,9 @@ public sealed partial class SqliteTelemetryRepository
                 ts.root_resource_name AS RootResourceName,
                 ts.root_instance_id AS RootInstanceId,
                 ts.root_uninstrumented_peer AS RootUninstrumentedPeer,
+                ts.primary_span_kind AS PrimarySpanKind,
+                ts.primary_span_status AS PrimarySpanStatus,
+                ts.http_status_code AS HttpStatusCode,
                 ts.has_error AS HasError,
                 ts.has_gen_ai AS HasGenAI,
                 rs.resource_name AS ResourceName,
@@ -160,6 +197,9 @@ public sealed partial class SqliteTelemetryRepository
                         TotalSpans = resource.TotalSpans!.Value,
                         ErroredSpans = resource.ErroredSpans!.Value
                     }).ToList(),
+                    SpanKind = (OtlpSpanKind)trace.PrimarySpanKind!.Value,
+                    SpanStatus = (OtlpSpanStatusCode)trace.PrimarySpanStatus!.Value,
+                    HttpStatusCode = trace.HttpStatusCode,
                     HasError = trace.HasError!.Value,
                     HasGenAI = trace.HasGenAI!.Value
                 };
@@ -877,6 +917,9 @@ public sealed partial class SqliteTelemetryRepository
         public string? RootResourceName { get; init; }
         public string? RootInstanceId { get; init; }
         public bool? RootUninstrumentedPeer { get; init; }
+        public int? PrimarySpanKind { get; init; }
+        public int? PrimarySpanStatus { get; init; }
+        public string? HttpStatusCode { get; init; }
         public bool? HasError { get; init; }
         public bool? HasGenAI { get; init; }
         public string? ResourceName { get; init; }

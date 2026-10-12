@@ -17,6 +17,9 @@ public sealed class TraceSummary
     public required TimeSpan Duration { get; init; }
     public required OtlpResource RootResource { get; init; }
     public required IReadOnlyList<TraceResourceSummary> Resources { get; init; }
+    public required OtlpSpanKind SpanKind { get; init; }
+    public required OtlpSpanStatusCode SpanStatus { get; init; }
+    public string? HttpStatusCode { get; init; }
     public required bool HasError { get; init; }
     public required bool HasGenAI { get; init; }
 }

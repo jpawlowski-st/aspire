@@ -520,7 +520,6 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
         var parameters = new DialogParameters
         {
             Title = ControlsStringsLoc[nameof(ControlsStrings.SaveFavouriteDialogTitle)],
-            TrapFocus = true,
             Modal = true,
             Width = "400px",
             Height = "auto",
@@ -532,7 +531,7 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
 
     private async Task OnSaveFavouriteDialogClosedAsync(DialogResult result, string url, string filterText)
     {
-        if (result.Cancelled || result.Data is not string name || string.IsNullOrWhiteSpace(name))
+        if (result.Cancelled || result.Value is not string name || string.IsNullOrWhiteSpace(name))
         {
             return;
         }
@@ -560,7 +559,6 @@ public partial class StructuredLogs : IComponentWithTelemetry, IPageWithSessionA
             _selectedFavourite = null;
             await FavouritesStore.SetLastAppliedIdAsync(FavouritesPageKey, null);
         }
-        StateHasChanged();
     }
 
     private bool HasAnyFilter()

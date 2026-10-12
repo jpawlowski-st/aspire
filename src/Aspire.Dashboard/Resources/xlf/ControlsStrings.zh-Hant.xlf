@@ -43,7 +43,7 @@
         <note />
       </trans-unit>
       <trans-unit id="ChartContainerGraphAccessibleLabel">
-        <source>Graph. For an accessible view please navigate to the Table tab</source>
+        <source>Graph. For an accessible view please navigate to the Resources tab</source>
         <target state="needs-review-translation">圖表。如需可存取的檢視，請瀏覽至 [資源] 索引標籤</target>
         <note />
       </trans-unit>
@@ -77,13 +77,18 @@
         <target state="translated">已偵測到基數限制</target>
         <note />
       </trans-unit>
+      <trans-unit id="ChartContainerParametersTab">
+        <source>Parameters</source>
+        <target state="new">Parameters</target>
+        <note />
+      </trans-unit>
       <trans-unit id="ChartContainerShowCountLabel">
         <source>Show count</source>
         <target state="translated">顯示計數</target>
         <note />
       </trans-unit>
       <trans-unit id="ChartContainerTableTab">
-        <source>Table</source>
+        <source>Resources</source>
         <target state="needs-review-translation">資源</target>
         <note />
       </trans-unit>
@@ -162,24 +167,9 @@
         <target state="translated">匯出 .env</target>
         <note />
       </trans-unit>
-      <trans-unit id="ResourcesContainerGraphAccessibleLabel">
-        <source>Graph. For an accessible view please navigate to the Resources tab</source>
-        <target state="new">Graph. For an accessible view please navigate to the Resources tab</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ResourcesContainerGraphTab">
-        <source>Graph</source>
-        <target state="new">Graph</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ResourcesContainerParametersTab">
-        <source>Parameters</source>
-        <target state="new">Parameters</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="ResourcesContainerTableTab">
-        <source>Resources</source>
-        <target state="new">Resources</target>
+      <trans-unit id="ExportJson">
+        <source>Export JSON</source>
+        <target state="new">Export JSON</target>
         <note />
       </trans-unit>
       <trans-unit id="ScrollToBottom">
@@ -191,11 +181,6 @@
         <source>Text content</source>
         <target state="new">Text content</target>
         <note>Accessible name for the scrollable text/code region in the text visualizer.</note>
-      </trans-unit>
-      <trans-unit id="ViewJson">
-        <source>View JSON</source>
-        <target state="new">View JSON</target>
-        <note />
       </trans-unit>
       <trans-unit id="FavouritesActiveTagTitle">
         <source>Active favourite: {0}</source>

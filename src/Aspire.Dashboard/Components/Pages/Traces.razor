@@ -171,12 +171,12 @@
                                     </span>
                                 </div>
                             </AspireTemplateColumn>
-                            <AspireTemplateColumn ColumnId="@KindColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.SpanKindLabel)]" Tooltip="true" TooltipText="@(context => GetSpanKindLabel(context.RootOrFirstSpan.Kind))">
-                                <span class="trace-kind">@GetSpanKindLabel(context.RootOrFirstSpan.Kind)</span>
+                            <AspireTemplateColumn ColumnId="@KindColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.SpanKindLabel)]" Tooltip="true" TooltipText="@(context => GetSpanKindLabel(context.SpanKind))">
+                                <span class="trace-kind">@GetSpanKindLabel(context.SpanKind)</span>
                             </AspireTemplateColumn>
-                            <AspireTemplateColumn ColumnId="@StatusColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.SpanStatusLabel)]" Tooltip="true" TooltipText="@(context => GetSpanStatusLabel(context.RootOrFirstSpan.Status))">
+                            <AspireTemplateColumn ColumnId="@StatusColumn" ColumnManager="@_manager" Title="@Loc[nameof(Dashboard.Resources.Traces.SpanStatusLabel)]" Tooltip="true" TooltipText="@(context => GetSpanStatusLabel(context.SpanStatus))">
                                 @{
-                                    var status = context.RootOrFirstSpan.Status;
+                                    var status = context.SpanStatus;
                                 }
                                 <span class="trace-status trace-status-@(status.ToString().ToLowerInvariant())">
                                     @if (status == OtlpSpanStatusCode.Error)
@@ -189,7 +189,7 @@
                                     }
                                     @GetSpanStatusLabel(status)
                                     @{
-                                        var httpStatusCode = GetHttpStatusCode(context);
+                                        var httpStatusCode = context.HttpStatusCode;
                                     }
                                     @if (!string.IsNullOrEmpty(httpStatusCode))
                                     {

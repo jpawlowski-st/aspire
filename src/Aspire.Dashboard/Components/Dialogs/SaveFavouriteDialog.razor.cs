@@ -11,10 +11,10 @@ public partial class SaveFavouriteDialog
 {
     private string _name = string.Empty;
     private EditContext _editContext = default!;
-    private FluentTextField? _nameField;
+    private FluentTextInput? _nameField;
 
     [CascadingParameter]
-    public FluentDialog? Dialog { get; set; }
+    public IDialogInstance? Dialog { get; set; }
 
     [Parameter]
     public SaveFavouriteDialogViewModel Content { get; set; } = default!;
@@ -25,11 +25,11 @@ public partial class SaveFavouriteDialog
         _editContext = new EditContext(this);
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && _nameField is not null)
         {
-            _nameField?.FocusAsync();
+            await _nameField.Element.FocusAsync();
         }
     }
 
